@@ -1,0 +1,2637 @@
+{
+  "overview": {
+    "totalEndpoints": 36,
+    "publicEndpoints": 7,
+    "adminEndpoints": 27,
+    "lastUpdated": "2025-10-29T20:15:03.643Z",
+    "coverage": {
+      "documented": 19,
+      "withUsage": 0
+    }
+  },
+  "apiReference": {
+    "src\\app\\api\\webhooks\\razorpay\\route.ts": {
+      "methods": [
+        "POST"
+      ],
+      "auth": {
+        "required": false,
+        "level": "public",
+        "roles": []
+      },
+      "documentation": [],
+      "parameters": [],
+      "responses": [
+        {
+          "status": 500,
+          "type": "error"
+        },
+        {
+          "status": 400,
+          "type": "error"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\webhooks\\razorpay\\route.ts"
+    },
+    "src\\app\\api\\verified-combinations\\route.ts": {
+      "methods": [
+        "POST"
+      ],
+      "auth": {
+        "required": true,
+        "level": "admin",
+        "roles": [
+          "admin"
+        ]
+      },
+      "documentation": [],
+      "parameters": [],
+      "responses": [
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\verified-combinations\\route.ts"
+    },
+    "src\\app\\api\\verified-combinations\\[id]\\route.ts": {
+      "methods": [
+        "PUT",
+        "DELETE"
+      ],
+      "auth": {
+        "required": true,
+        "level": "admin",
+        "roles": [
+          "admin"
+        ]
+      },
+      "documentation": [
+        "PUT handler to update a specific product combination. Secured for admin access only.",
+        "DELETE handler to remove a specific product combination. Secured for admin access only."
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "type": "path",
+          "required": true
+        },
+        {
+          "name": "id",
+          "type": "path",
+          "required": true
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\verified-combinations\\[id]\\route.ts"
+    },
+    "src\\app\\api\\tracking\\sync\\route.ts": {
+      "methods": [
+        "POST"
+      ],
+      "auth": {
+        "required": true,
+        "level": "user",
+        "roles": [
+          "user"
+        ]
+      },
+      "documentation": [],
+      "parameters": [],
+      "responses": [
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\tracking\\sync\\route.ts"
+    },
+    "src\\app\\api\\settings\\delhivery\\route.ts": {
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": {
+        "required": true,
+        "level": "admin",
+        "roles": [
+          "admin"
+        ]
+      },
+      "documentation": [
+        "GET handler to fetch current Delhivery settings. Secured for admin access only.",
+        "POST handler to update Delhivery settings. Secured for admin access only."
+      ],
+      "parameters": [],
+      "responses": [
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\settings\\delhivery\\route.ts"
+    },
+    "src\\app\\api\\settings\\checkout\\route.ts": {
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": {
+        "required": true,
+        "level": "admin",
+        "roles": [
+          "admin"
+        ]
+      },
+      "documentation": [
+        "GET handler to fetch the current checkout settings. Secured for admin access only.",
+        "POST handler to update the checkout settings. Secured for admin access only."
+      ],
+      "parameters": [],
+      "responses": [
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\settings\\checkout\\route.ts"
+    },
+    "src\\app\\api\\settings\\auto-approval\\route.ts": {
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": {
+        "required": true,
+        "level": "admin",
+        "roles": [
+          "admin"
+        ]
+      },
+      "documentation": [
+        "GET handler to fetch the current auto-approval settings. Secured for admin access only.",
+        "POST handler to update the auto-approval settings. Secured for admin access only."
+      ],
+      "parameters": [],
+      "responses": [
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\settings\\auto-approval\\route.ts"
+    },
+    "src\\app\\api\\products\\route.ts": {
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": {
+        "required": true,
+        "level": "admin",
+        "roles": [
+          "admin"
+        ]
+      },
+      "documentation": [],
+      "parameters": [
+        {
+          "name": "search",
+          "type": "query",
+          "required": false
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        },
+        {
+          "status": 400,
+          "type": "error"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\products\\route.ts"
+    },
+    "src\\app\\api\\products\\[productId]\\route.ts": {
+      "methods": [
+        "PUT",
+        "DELETE"
+      ],
+      "auth": {
+        "required": true,
+        "level": "admin",
+        "roles": [
+          "admin"
+        ]
+      },
+      "documentation": [],
+      "parameters": [],
+      "responses": [
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\products\\[productId]\\route.ts"
+    },
+    "src\\app\\api\\products\\sku-check\\route.ts": {
+      "methods": [
+        "GET"
+      ],
+      "auth": {
+        "required": true,
+        "level": "admin",
+        "roles": [
+          "admin"
+        ]
+      },
+      "documentation": [
+        "GET handler to check if a product SKU is unique across the catalog. Secured for admin access only."
+      ],
+      "parameters": [
+        {
+          "name": "sku",
+          "type": "query",
+          "required": false
+        },
+        {
+          "name": "productId",
+          "type": "query",
+          "required": false
+        }
+      ],
+      "responses": [
+        {
+          "status": 400,
+          "type": "error"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\products\\sku-check\\route.ts"
+    },
+    "src\\app\\api\\pincode\\[pincode]\\route.ts": {
+      "methods": [
+        "GET"
+      ],
+      "auth": {
+        "required": false,
+        "level": "public",
+        "roles": []
+      },
+      "documentation": [],
+      "parameters": [],
+      "responses": [
+        {
+          "status": 400,
+          "type": "error"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\pincode\\[pincode]\\route.ts"
+    },
+    "src\\app\\api\\orders\\route.ts": {
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": {
+        "required": true,
+        "level": "admin",
+        "roles": [
+          "admin"
+        ]
+      },
+      "documentation": [],
+      "parameters": [
+        {
+          "name": "status",
+          "type": "query",
+          "required": false
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\orders\\route.ts"
+    },
+    "src\\app\\api\\orders\\[orderId]\\route.ts": {
+      "methods": [
+        "GET"
+      ],
+      "auth": {
+        "required": true,
+        "level": "admin",
+        "roles": [
+          "admin"
+        ]
+      },
+      "documentation": [],
+      "parameters": [],
+      "responses": [
+        {
+          "status": 500,
+          "type": "error"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\orders\\[orderId]\\route.ts"
+    },
+    "src\\app\\api\\orders\\[orderId]\\update-dimensions\\route.ts": {
+      "methods": [
+        "POST"
+      ],
+      "auth": {
+        "required": true,
+        "level": "admin",
+        "roles": [
+          "admin"
+        ]
+      },
+      "documentation": [],
+      "parameters": [],
+      "responses": [
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\orders\\[orderId]\\update-dimensions\\route.ts"
+    },
+    "src\\app\\api\\orders\\[orderId]\\ship\\route.ts": {
+      "methods": [
+        "POST"
+      ],
+      "auth": {
+        "required": true,
+        "level": "user",
+        "roles": [
+          "user"
+        ]
+      },
+      "documentation": [],
+      "parameters": [],
+      "responses": [
+        {
+          "status": 500,
+          "type": "error"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\orders\\[orderId]\\ship\\route.ts"
+    },
+    "src\\app\\api\\orders\\[orderId]\\approve\\route.ts": {
+      "methods": [
+        "POST"
+      ],
+      "auth": {
+        "required": true,
+        "level": "admin",
+        "roles": [
+          "admin"
+        ]
+      },
+      "documentation": [],
+      "parameters": [],
+      "responses": [
+        {
+          "status": 400,
+          "type": "error"
+        },
+        {
+          "status": 400,
+          "type": "error"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\orders\\[orderId]\\approve\\route.ts"
+    },
+    "src\\app\\api\\orders\\optimized\\route.ts": {
+      "methods": [
+        "GET"
+      ],
+      "auth": {
+        "required": true,
+        "level": "admin",
+        "roles": [
+          "admin"
+        ]
+      },
+      "documentation": [],
+      "parameters": [
+        {
+          "name": "status",
+          "type": "query",
+          "required": false
+        },
+        {
+          "name": "limit",
+          "type": "query",
+          "required": false
+        },
+        {
+          "name": "lastOrderId",
+          "type": "query",
+          "required": false
+        },
+        {
+          "name": "fields",
+          "type": "query",
+          "required": false
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\orders\\optimized\\route.ts"
+    },
+    "src\\app\\api\\orders\\bulk-optimized\\route.ts": {
+      "methods": [
+        "POST"
+      ],
+      "auth": {
+        "required": true,
+        "level": "admin",
+        "roles": [
+          "admin"
+        ]
+      },
+      "documentation": [],
+      "parameters": [],
+      "responses": [
+        {
+          "status": 400,
+          "type": "error"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\orders\\bulk-optimized\\route.ts"
+    },
+    "src\\app\\api\\orders\\bulk\\route.ts": {
+      "methods": [
+        "POST"
+      ],
+      "auth": {
+        "required": true,
+        "level": "admin",
+        "roles": [
+          "admin"
+        ]
+      },
+      "documentation": [
+        "POST /api/orders/bulk\r Bulk operations on orders (approve, reject, ship)\r"
+      ],
+      "parameters": [],
+      "responses": [
+        {
+          "status": 400,
+          "type": "error"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\orders\\bulk\\route.ts"
+    },
+    "src\\app\\api\\customers\\route.ts": {
+      "methods": [
+        "GET"
+      ],
+      "auth": {
+        "required": true,
+        "level": "admin",
+        "roles": [
+          "admin"
+        ]
+      },
+      "documentation": [],
+      "parameters": [
+        {
+          "name": "search",
+          "type": "query",
+          "required": false
+        },
+        {
+          "name": "segment",
+          "type": "query",
+          "required": false
+        },
+        {
+          "name": "tier",
+          "type": "query",
+          "required": false
+        },
+        {
+          "name": "region",
+          "type": "query",
+          "required": false
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\customers\\route.ts"
+    },
+    "src\\app\\api\\customers\\[phone]\\route.ts": {
+      "methods": [
+        "GET",
+        "PUT"
+      ],
+      "auth": {
+        "required": true,
+        "level": "admin",
+        "roles": [
+          "admin"
+        ]
+      },
+      "documentation": [],
+      "parameters": [],
+      "responses": [
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\customers\\[phone]\\route.ts"
+    },
+    "src\\app\\api\\customers\\recalculate\\route.ts": {
+      "methods": [
+        "POST"
+      ],
+      "auth": {
+        "required": true,
+        "level": "admin",
+        "roles": [
+          "admin"
+        ]
+      },
+      "documentation": [
+        "POST handler to trigger a batch recalculation of loyalty tiers for all customers. Secured for admin access only."
+      ],
+      "parameters": [],
+      "responses": [
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\customers\\recalculate\\route.ts"
+    },
+    "src\\app\\api\\customers\\create\\route.ts": {
+      "methods": [
+        "POST"
+      ],
+      "auth": {
+        "required": true,
+        "level": "admin",
+        "roles": [
+          "admin"
+        ]
+      },
+      "documentation": [],
+      "parameters": [],
+      "responses": [
+        {
+          "status": 400,
+          "type": "error"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\customers\\create\\route.ts"
+    },
+    "src\\app\\api\\customer\\tracking\\[awb]\\route.ts": {
+      "methods": [
+        "GET"
+      ],
+      "auth": {
+        "required": false,
+        "level": "public",
+        "roles": []
+      },
+      "documentation": [
+        "GET /api/customer/tracking/[awb]\r Track order by AWB number (for guest users)\r"
+      ],
+      "parameters": [],
+      "responses": [
+        {
+          "status": 400,
+          "type": "error"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\customer\\tracking\\[awb]\\route.ts"
+    },
+    "src\\app\\api\\customer\\orders\\route.ts": {
+      "methods": [
+        "GET"
+      ],
+      "auth": {
+        "required": false,
+        "level": "public",
+        "roles": []
+      },
+      "documentation": [
+        "GET /api/customer/orders\r Fetch customer orders by customerId or phone\r"
+      ],
+      "parameters": [
+        {
+          "name": "customerId",
+          "type": "query",
+          "required": false
+        },
+        {
+          "name": "phone",
+          "type": "query",
+          "required": false
+        },
+        {
+          "name": "limit",
+          "type": "query",
+          "required": false
+        }
+      ],
+      "responses": [
+        {
+          "status": 400,
+          "type": "error"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\customer\\orders\\route.ts"
+    },
+    "src\\app\\api\\customer\\orders\\[orderId]\\route.ts": {
+      "methods": [
+        "GET"
+      ],
+      "auth": {
+        "required": false,
+        "level": "public",
+        "roles": []
+      },
+      "documentation": [
+        "GET /api/customer/orders/[orderId]\r Get specific customer order details\r"
+      ],
+      "parameters": [],
+      "responses": [
+        {
+          "status": 400,
+          "type": "error"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\customer\\orders\\[orderId]\\route.ts"
+    },
+    "src\\app\\api\\customer\\orders\\create\\route.ts": {
+      "methods": [
+        "POST"
+      ],
+      "auth": {
+        "required": false,
+        "level": "public",
+        "roles": []
+      },
+      "documentation": [
+        "POST /api/customer/orders/create\r Create order from customer-facing app (no authentication required)\r",
+        "Validates items and enriches with product details\r",
+        "Generate order ID\r",
+        "Calculate expected delivery date\r"
+      ],
+      "parameters": [],
+      "responses": [
+        {
+          "status": 400,
+          "type": "error"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\customer\\orders\\create\\route.ts"
+    },
+    "src\\app\\api\\customer\\coupons\\validate\\route.ts": {
+      "methods": [
+        "POST"
+      ],
+      "auth": {
+        "required": false,
+        "level": "public",
+        "roles": []
+      },
+      "documentation": [
+        "POST /api/customer/coupons/validate\r Validate coupon code for customer (no auth required)\r"
+      ],
+      "parameters": [],
+      "responses": [
+        {
+          "status": 400,
+          "type": "error"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\customer\\coupons\\validate\\route.ts"
+    },
+    "src\\app\\api\\admin\\tracking\\status\\route.ts": {
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": {
+        "required": true,
+        "level": "admin",
+        "roles": [
+          "admin"
+        ]
+      },
+      "documentation": [
+        "GET /api/admin/tracking/status\r Get tracking system status and statistics\r",
+        "POST /api/admin/tracking/status\r Manually trigger tracking sync\r"
+      ],
+      "parameters": [],
+      "responses": [
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\admin\\tracking\\status\\route.ts"
+    },
+    "src\\app\\api\\admin\\orders\\[orderId]\\status\\route.ts": {
+      "methods": [
+        "PUT",
+        "PATCH"
+      ],
+      "auth": {
+        "required": true,
+        "level": "admin",
+        "roles": [
+          "admin"
+        ]
+      },
+      "documentation": [],
+      "parameters": [],
+      "responses": [
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        },
+        {
+          "status": 400,
+          "type": "error"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\admin\\orders\\[orderId]\\status\\route.ts"
+    },
+    "src\\app\\api\\admin\\migrate-customer-orders\\route.ts": {
+      "methods": [
+        "POST"
+      ],
+      "auth": {
+        "required": true,
+        "level": "admin",
+        "roles": [
+          "admin"
+        ]
+      },
+      "documentation": [
+        "POST /api/admin/migrate-customer-orders\r One-time migration to sync existing orders to customerOrders collection\r"
+      ],
+      "parameters": [],
+      "responses": [
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\admin\\migrate-customer-orders\\route.ts"
+    },
+    "src\\app\\api\\admin\\coupons\\route.ts": {
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": {
+        "required": true,
+        "level": "admin",
+        "roles": [
+          "admin"
+        ]
+      },
+      "documentation": [
+        "GET /api/admin/coupons\r List all coupons with optional filtering\r",
+        "POST /api/admin/coupons\r Create a new coupon\r"
+      ],
+      "parameters": [
+        {
+          "name": "isActive",
+          "type": "query",
+          "required": false
+        },
+        {
+          "name": "usageType",
+          "type": "query",
+          "required": false
+        },
+        {
+          "name": "limit",
+          "type": "query",
+          "required": false
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        },
+        {
+          "status": 400,
+          "type": "error"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\admin\\coupons\\route.ts"
+    },
+    "src\\app\\api\\admin\\coupons\\[couponId]\\route.ts": {
+      "methods": [
+        "GET",
+        "PUT",
+        "DELETE"
+      ],
+      "auth": {
+        "required": true,
+        "level": "admin",
+        "roles": [
+          "admin"
+        ]
+      },
+      "documentation": [
+        "GET /api/admin/coupons/[couponId]\r Get specific coupon details\r",
+        "PUT /api/admin/coupons/[couponId]\r Update coupon\r",
+        "DELETE /api/admin/coupons/[couponId]\r Delete coupon (soft delete by setting isActive to false)\r"
+      ],
+      "parameters": [],
+      "responses": [
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\admin\\coupons\\[couponId]\\route.ts"
+    },
+    "src\\app\\api\\admin\\coupons\\[couponId]\\stats\\route.ts": {
+      "methods": [
+        "GET"
+      ],
+      "auth": {
+        "required": true,
+        "level": "admin",
+        "roles": [
+          "admin"
+        ]
+      },
+      "documentation": [
+        "GET /api/admin/coupons/[couponId]/stats\r Get coupon usage statistics\r"
+      ],
+      "parameters": [],
+      "responses": [
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\admin\\coupons\\[couponId]\\stats\\route.ts"
+    },
+    "src\\app\\api\\admin\\cache\\customers\\route.ts": {
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": {
+        "required": true,
+        "level": "admin",
+        "roles": [
+          "admin"
+        ]
+      },
+      "documentation": [
+        "GET /api/admin/cache/customers\r Get cache statistics\r",
+        "POST /api/admin/cache/customers\r Refresh customer cache from Firestore\r"
+      ],
+      "parameters": [],
+      "responses": [
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\admin\\cache\\customers\\route.ts"
+    },
+    "src\\app\\api\\admin\\analytics\\traffic-sources\\route.ts": {
+      "methods": [
+        "GET"
+      ],
+      "auth": {
+        "required": true,
+        "level": "admin",
+        "roles": [
+          "admin"
+        ]
+      },
+      "documentation": [
+        "GET /api/admin/analytics/traffic-sources\r Get traffic source analytics\r"
+      ],
+      "parameters": [
+        {
+          "name": "days",
+          "type": "query",
+          "required": false
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 200,
+          "type": "success"
+        },
+        {
+          "status": 500,
+          "type": "error"
+        }
+      ],
+      "usage": [],
+      "file": "src\\app\\api\\admin\\analytics\\traffic-sources\\route.ts"
+    }
+  },
+  "usageMatrix": [
+    {
+      "endpoint": "src\\app\\api\\webhooks\\razorpay\\route.ts",
+      "methods": [
+        "POST"
+      ],
+      "auth": "public",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-26T14:36:27.881Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\verified-combinations\\route.ts",
+      "methods": [
+        "POST"
+      ],
+      "auth": "admin",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-26T14:36:27.865Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\verified-combinations\\[id]\\route.ts",
+      "methods": [
+        "PUT",
+        "DELETE"
+      ],
+      "auth": "admin",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-26T14:36:27.871Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\tracking\\sync\\route.ts",
+      "methods": [
+        "POST"
+      ],
+      "auth": "user",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-26T18:28:01.005Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\settings\\delhivery\\route.ts",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "admin",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-26T14:36:27.857Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\settings\\checkout\\route.ts",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "admin",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-26T14:36:27.851Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\settings\\auto-approval\\route.ts",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "admin",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-26T14:36:27.844Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\products\\route.ts",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "admin",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-26T14:36:27.821Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\products\\[productId]\\route.ts",
+      "methods": [
+        "PUT",
+        "DELETE"
+      ],
+      "auth": "admin",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-26T14:36:27.829Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\products\\sku-check\\route.ts",
+      "methods": [
+        "GET"
+      ],
+      "auth": "admin",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-26T14:36:27.834Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\pincode\\[pincode]\\route.ts",
+      "methods": [
+        "GET"
+      ],
+      "auth": "public",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-28T20:34:50.101Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\orders\\route.ts",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "admin",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-27T07:42:06.198Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\orders\\[orderId]\\route.ts",
+      "methods": [
+        "GET"
+      ],
+      "auth": "admin",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-28T19:25:09.308Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\orders\\[orderId]\\update-dimensions\\route.ts",
+      "methods": [
+        "POST"
+      ],
+      "auth": "admin",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-26T14:36:27.789Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\orders\\[orderId]\\ship\\route.ts",
+      "methods": [
+        "POST"
+      ],
+      "auth": "user",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-28T19:39:29.870Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\orders\\[orderId]\\approve\\route.ts",
+      "methods": [
+        "POST"
+      ],
+      "auth": "admin",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-26T14:36:27.783Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\orders\\optimized\\route.ts",
+      "methods": [
+        "GET"
+      ],
+      "auth": "admin",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-28T19:41:00.359Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\orders\\bulk-optimized\\route.ts",
+      "methods": [
+        "POST"
+      ],
+      "auth": "admin",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-28T19:14:37.632Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\orders\\bulk\\route.ts",
+      "methods": [
+        "POST"
+      ],
+      "auth": "admin",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-27T06:39:06.298Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\customers\\route.ts",
+      "methods": [
+        "GET"
+      ],
+      "auth": "admin",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-29T08:40:22.406Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\customers\\[phone]\\route.ts",
+      "methods": [
+        "GET",
+        "PUT"
+      ],
+      "auth": "admin",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-26T14:36:27.746Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\customers\\recalculate\\route.ts",
+      "methods": [
+        "POST"
+      ],
+      "auth": "admin",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-26T14:36:27.767Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\customers\\create\\route.ts",
+      "methods": [
+        "POST"
+      ],
+      "auth": "admin",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-26T14:36:27.760Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\customer\\tracking\\[awb]\\route.ts",
+      "methods": [
+        "GET"
+      ],
+      "auth": "public",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-26T18:29:48.875Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\customer\\orders\\route.ts",
+      "methods": [
+        "GET"
+      ],
+      "auth": "public",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-26T18:28:45.636Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\customer\\orders\\[orderId]\\route.ts",
+      "methods": [
+        "GET"
+      ],
+      "auth": "public",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-26T18:26:21.278Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\customer\\orders\\create\\route.ts",
+      "methods": [
+        "POST"
+      ],
+      "auth": "public",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-27T07:04:25.840Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\customer\\coupons\\validate\\route.ts",
+      "methods": [
+        "POST"
+      ],
+      "auth": "public",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-26T18:43:13.061Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\admin\\tracking\\status\\route.ts",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "admin",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-26T20:04:01.393Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\admin\\orders\\[orderId]\\status\\route.ts",
+      "methods": [
+        "PUT",
+        "PATCH"
+      ],
+      "auth": "admin",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-26T20:15:08.653Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\admin\\migrate-customer-orders\\route.ts",
+      "methods": [
+        "POST"
+      ],
+      "auth": "admin",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-26T18:27:24.338Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\admin\\coupons\\route.ts",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "admin",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-26T19:13:20.693Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\admin\\coupons\\[couponId]\\route.ts",
+      "methods": [
+        "GET",
+        "PUT",
+        "DELETE"
+      ],
+      "auth": "admin",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-26T18:42:43.085Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\admin\\coupons\\[couponId]\\stats\\route.ts",
+      "methods": [
+        "GET"
+      ],
+      "auth": "admin",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-26T18:54:54.612Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\admin\\cache\\customers\\route.ts",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "admin",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-27T08:05:02.529Z"
+    },
+    {
+      "endpoint": "src\\app\\api\\admin\\analytics\\traffic-sources\\route.ts",
+      "methods": [
+        "GET"
+      ],
+      "auth": "admin",
+      "usedBy": [],
+      "usageCount": 0,
+      "lastModified": "2025-10-29T19:51:17.951Z"
+    }
+  ],
+  "componentMap": {
+    "page": {
+      "file": "src\\app\\(dashboard)\\analytics\\page.tsx",
+      "exports": [
+        "AnalyticsPage"
+      ],
+      "imports": [
+        "react",
+        "@/components/ui/card",
+        "@/components/ui/badge",
+        "@/hooks/use-toast",
+        "@/lib/api/utils"
+      ],
+      "usedAPIs": [
+        "/api/admin/tracking/status",
+        "/api/tracking/sync",
+        "/api/settings/auto-approval",
+        "/api/settings/delhivery",
+        "/api/settings/checkout",
+        "/api/products",
+        "/api/products/${productId}",
+        "/api/products/${selectedProduct.id}",
+        "/api/orders/${orderId}/ship",
+        "/api/orders/${order.id}",
+        "/api/orders/${order.id}/ship",
+        "/api/orders/bulk-optimized",
+        "/api/customers/${customer.phone}",
+        "/api/admin/coupons",
+        "/api/admin/coupons/${couponId}",
+        "/api/admin/cache/customers",
+        "/api/admin/analytics/traffic-sources"
+      ]
+    },
+    "layout": {
+      "file": "src\\app\\(dashboard)\\layout.tsx",
+      "exports": [
+        "DashboardLayout"
+      ],
+      "imports": [
+        "@/components/nav",
+        "@/components/header"
+      ],
+      "usedAPIs": []
+    },
+    "product-form": {
+      "file": "src\\app\\(dashboard)\\products\\product-form.tsx",
+      "exports": [
+        "ProductForm"
+      ],
+      "imports": [
+        "react",
+        "react-hook-form",
+        "zod",
+        "@hookform/resolvers/zod",
+        "@/components/ui/button",
+        "@/components/ui/dialog",
+        "@/components/ui/form",
+        "@/components/ui/input",
+        "@/components/ui/textarea",
+        "@/components/ui/switch",
+        "@/components/ui/separator",
+        "lucide-react",
+        "@/types/products",
+        "./category-combobox",
+        "@/components/core/image-upload",
+        "lodash",
+        "@/lib/api/utils"
+      ],
+      "usedAPIs": []
+    },
+    "category-manager": {
+      "file": "src\\app\\(dashboard)\\products\\category-manager.tsx",
+      "exports": [
+        "CategoryManager"
+      ],
+      "imports": [
+        "react",
+        "@/lib/firebase/client",
+        "firebase/firestore",
+        "@/components/ui/button",
+        "@/components/ui/dialog",
+        "@/components/ui/input",
+        "@/components/ui/table",
+        "@/components/ui/dropdown-menu",
+        "@/components/ui/alert-dialog",
+        "lucide-react",
+        "@/hooks/use-toast"
+      ],
+      "usedAPIs": []
+    },
+    "category-combobox": {
+      "file": "src\\app\\(dashboard)\\products\\category-combobox.tsx",
+      "exports": [
+        "CategoryCombobox"
+      ],
+      "imports": [
+        "react",
+        "lucide-react",
+        "@/components/ui/button",
+        "@/components/ui/command",
+        "@/components/ui/dialog",
+        "@/components/ui/input",
+        "@/components/ui/popover",
+        "@/lib/firebase/client",
+        "firebase/firestore",
+        "@/hooks/use-toast"
+      ],
+      "usedAPIs": []
+    },
+    "update-dimensions-dialog": {
+      "file": "src\\app\\(dashboard)\\orders\\update-dimensions-dialog.tsx",
+      "exports": [
+        "UpdateDimensionsDialog"
+      ],
+      "imports": [
+        "react",
+        "@/components/ui/dialog",
+        "@/components/ui/button",
+        "@/components/ui/input",
+        "@/components/ui/label",
+        "@/hooks/use-toast",
+        "@/lib/api/utils"
+      ],
+      "usedAPIs": [
+        "/api/orders/${orderId}/update-dimensions"
+      ]
+    },
+    "ship-order-dialog": {
+      "file": "src\\app\\(dashboard)\\orders\\ship-order-dialog.tsx",
+      "exports": [
+        "ShipOrderDialog"
+      ],
+      "imports": [
+        "react",
+        "@/components/ui/dialog",
+        "@/components/ui/button",
+        "@/components/ui/select",
+        "@/components/ui/input",
+        "@/hooks/use-toast",
+        "@/lib/api/utils"
+      ],
+      "usedAPIs": [
+        "/api/orders/${orderId}/ship"
+      ]
+    },
+    "page-original": {
+      "file": "src\\app\\(dashboard)\\orders\\page-original.tsx",
+      "exports": [
+        "OrdersPage"
+      ],
+      "imports": [
+        "react",
+        "@/types/order",
+        "@/components/ui/card",
+        "@/components/ui/table",
+        "@/components/ui/badge",
+        "@/hooks/use-toast",
+        "@/components/ui/button",
+        "@/components/ui/dropdown-menu",
+        "@/components/ui/tabs",
+        "lucide-react",
+        "./create-order-dialog",
+        "./ship-order-dialog",
+        "./update-dimensions-dialog",
+        "./order-details-dialog",
+        "@/lib/api/utils"
+      ],
+      "usedAPIs": [
+        "/api/orders/${orderId}/ship",
+        "/api/orders/${order.id}/ship",
+        "/api/orders",
+        "/api/orders/bulk",
+        "/api/orders/${orderId}/approve"
+      ]
+    },
+    "order-details-dialog": {
+      "file": "src\\app\\(dashboard)\\orders\\order-details-dialog.tsx",
+      "exports": [
+        "OrderDetailsDialog"
+      ],
+      "imports": [
+        "react",
+        "@/components/ui/card",
+        "@/components/ui/badge",
+        "@/components/ui/separator",
+        "@/components/ui/button",
+        "@/types/order"
+      ],
+      "usedAPIs": []
+    },
+    "optimized-page": {
+      "file": "src\\app\\(dashboard)\\orders\\optimized-page.tsx",
+      "exports": [
+        "OptimizedOrdersPage"
+      ],
+      "imports": [
+        "react",
+        "@/types/order",
+        "@/components/ui/card",
+        "@/components/ui/table",
+        "@/components/ui/badge",
+        "@/hooks/use-toast",
+        "@/components/ui/button",
+        "@/components/ui/dropdown-menu",
+        "@/components/ui/tabs",
+        "lucide-react",
+        "./create-order-dialog",
+        "./ship-order-dialog",
+        "./update-dimensions-dialog",
+        "./order-details-dialog",
+        "@/lib/api/utils",
+        "@/hooks/useOptimizedOrders"
+      ],
+      "usedAPIs": [
+        "/api/orders/${orderId}/ship",
+        "/api/orders/${order.id}",
+        "/api/orders/${order.id}/ship",
+        "/api/orders/bulk-optimized"
+      ]
+    },
+    "create-order-dialog": {
+      "file": "src\\app\\(dashboard)\\orders\\create-order-dialog.tsx",
+      "exports": [
+        "CreateOrderDialog"
+      ],
+      "imports": [
+        "react",
+        "zod",
+        "@/components/ui/dialog",
+        "@/components/ui/button",
+        "@/components/ui/input",
+        "@/components/ui/label",
+        "@/components/ui/select",
+        "@/hooks/use-toast",
+        "@/types/order",
+        "@/types/customers",
+        "@/components/ui/badge",
+        "@/lib/api/utils"
+      ],
+      "usedAPIs": [
+        "/api/products",
+        "/api/orders",
+        "/api/pincode/${pincode}",
+        "/api/customers/${formattedPhone}"
+      ]
+    },
+    "address-manager": {
+      "file": "src\\app\\(dashboard)\\customers\\address-manager.tsx",
+      "exports": [
+        "AddressManager"
+      ],
+      "imports": [
+        "react",
+        "@/components/ui/button",
+        "@/components/ui/card",
+        "@/components/ui/dialog",
+        "@/components/ui/input",
+        "@/components/ui/label",
+        "@/hooks/use-toast",
+        "lucide-react",
+        "@/types/customers",
+        "@/lib/api/utils"
+      ],
+      "usedAPIs": [
+        "/api/pincode/${pincode}"
+      ]
+    },
+    "edit-coupon-dialog": {
+      "file": "src\\app\\(dashboard)\\coupons\\edit-coupon-dialog.tsx",
+      "exports": [
+        "EditCouponDialog"
+      ],
+      "imports": [
+        "react",
+        "react-hook-form",
+        "@hookform/resolvers/zod",
+        "zod",
+        "@/components/ui/input",
+        "@/components/ui/button",
+        "@/components/ui/textarea",
+        "@/components/ui/switch",
+        "@/hooks/use-toast",
+        "@/lib/api/utils",
+        "@/types/coupon"
+      ],
+      "usedAPIs": [
+        "/api/admin/coupons/${coupon.id}"
+      ]
+    },
+    "create-coupon-dialog": {
+      "file": "src\\app\\(dashboard)\\coupons\\create-coupon-dialog.tsx",
+      "exports": [
+        "CreateCouponDialog"
+      ],
+      "imports": [
+        "react",
+        "react-hook-form",
+        "@hookform/resolvers/zod",
+        "zod",
+        "@/components/ui/input",
+        "@/components/ui/button",
+        "@/components/ui/textarea",
+        "@/hooks/use-toast",
+        "@/lib/api/utils"
+      ],
+      "usedAPIs": [
+        "/api/admin/coupons"
+      ]
+    },
+    "coupon-stats-dialog": {
+      "file": "src\\app\\(dashboard)\\coupons\\coupon-stats-dialog.tsx",
+      "exports": [
+        "CouponStatsDialog"
+      ],
+      "imports": [
+        "react",
+        "@/components/ui/card",
+        "@/components/ui/badge",
+        "@/components/ui/separator",
+        "@/hooks/use-toast",
+        "@/lib/api/utils",
+        "@/types/coupon"
+      ],
+      "usedAPIs": [
+        "/api/admin/coupons/${coupon.id}/stats"
+      ]
+    }
+  },
+  "dependencyGraph": {
+    "nodes": [
+      {
+        "id": "src\\app\\api\\webhooks\\razorpay\\route.ts",
+        "type": "api",
+        "auth": "public",
+        "methods": [
+          "POST"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\verified-combinations\\route.ts",
+        "type": "api",
+        "auth": "admin",
+        "methods": [
+          "POST"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\verified-combinations\\[id]\\route.ts",
+        "type": "api",
+        "auth": "admin",
+        "methods": [
+          "PUT",
+          "DELETE"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\tracking\\sync\\route.ts",
+        "type": "api",
+        "auth": "user",
+        "methods": [
+          "POST"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\settings\\delhivery\\route.ts",
+        "type": "api",
+        "auth": "admin",
+        "methods": [
+          "GET",
+          "POST"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\settings\\checkout\\route.ts",
+        "type": "api",
+        "auth": "admin",
+        "methods": [
+          "GET",
+          "POST"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\settings\\auto-approval\\route.ts",
+        "type": "api",
+        "auth": "admin",
+        "methods": [
+          "GET",
+          "POST"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\products\\route.ts",
+        "type": "api",
+        "auth": "admin",
+        "methods": [
+          "GET",
+          "POST"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\products\\[productId]\\route.ts",
+        "type": "api",
+        "auth": "admin",
+        "methods": [
+          "PUT",
+          "DELETE"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\products\\sku-check\\route.ts",
+        "type": "api",
+        "auth": "admin",
+        "methods": [
+          "GET"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\pincode\\[pincode]\\route.ts",
+        "type": "api",
+        "auth": "public",
+        "methods": [
+          "GET"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\orders\\route.ts",
+        "type": "api",
+        "auth": "admin",
+        "methods": [
+          "GET",
+          "POST"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\orders\\[orderId]\\route.ts",
+        "type": "api",
+        "auth": "admin",
+        "methods": [
+          "GET"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\orders\\[orderId]\\update-dimensions\\route.ts",
+        "type": "api",
+        "auth": "admin",
+        "methods": [
+          "POST"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\orders\\[orderId]\\ship\\route.ts",
+        "type": "api",
+        "auth": "user",
+        "methods": [
+          "POST"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\orders\\[orderId]\\approve\\route.ts",
+        "type": "api",
+        "auth": "admin",
+        "methods": [
+          "POST"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\orders\\optimized\\route.ts",
+        "type": "api",
+        "auth": "admin",
+        "methods": [
+          "GET"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\orders\\bulk-optimized\\route.ts",
+        "type": "api",
+        "auth": "admin",
+        "methods": [
+          "POST"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\orders\\bulk\\route.ts",
+        "type": "api",
+        "auth": "admin",
+        "methods": [
+          "POST"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\customers\\route.ts",
+        "type": "api",
+        "auth": "admin",
+        "methods": [
+          "GET"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\customers\\[phone]\\route.ts",
+        "type": "api",
+        "auth": "admin",
+        "methods": [
+          "GET",
+          "PUT"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\customers\\recalculate\\route.ts",
+        "type": "api",
+        "auth": "admin",
+        "methods": [
+          "POST"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\customers\\create\\route.ts",
+        "type": "api",
+        "auth": "admin",
+        "methods": [
+          "POST"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\customer\\tracking\\[awb]\\route.ts",
+        "type": "api",
+        "auth": "public",
+        "methods": [
+          "GET"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\customer\\orders\\route.ts",
+        "type": "api",
+        "auth": "public",
+        "methods": [
+          "GET"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\customer\\orders\\[orderId]\\route.ts",
+        "type": "api",
+        "auth": "public",
+        "methods": [
+          "GET"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\customer\\orders\\create\\route.ts",
+        "type": "api",
+        "auth": "public",
+        "methods": [
+          "POST"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\customer\\coupons\\validate\\route.ts",
+        "type": "api",
+        "auth": "public",
+        "methods": [
+          "POST"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\admin\\tracking\\status\\route.ts",
+        "type": "api",
+        "auth": "admin",
+        "methods": [
+          "GET",
+          "POST"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\admin\\orders\\[orderId]\\status\\route.ts",
+        "type": "api",
+        "auth": "admin",
+        "methods": [
+          "PUT",
+          "PATCH"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\admin\\migrate-customer-orders\\route.ts",
+        "type": "api",
+        "auth": "admin",
+        "methods": [
+          "POST"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\admin\\coupons\\route.ts",
+        "type": "api",
+        "auth": "admin",
+        "methods": [
+          "GET",
+          "POST"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\admin\\coupons\\[couponId]\\route.ts",
+        "type": "api",
+        "auth": "admin",
+        "methods": [
+          "GET",
+          "PUT",
+          "DELETE"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\admin\\coupons\\[couponId]\\stats\\route.ts",
+        "type": "api",
+        "auth": "admin",
+        "methods": [
+          "GET"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\admin\\cache\\customers\\route.ts",
+        "type": "api",
+        "auth": "admin",
+        "methods": [
+          "GET",
+          "POST"
+        ]
+      },
+      {
+        "id": "src\\app\\api\\admin\\analytics\\traffic-sources\\route.ts",
+        "type": "api",
+        "auth": "admin",
+        "methods": [
+          "GET"
+        ]
+      },
+      {
+        "id": "page",
+        "type": "component",
+        "file": "src\\app\\(dashboard)\\analytics\\page.tsx"
+      },
+      {
+        "id": "layout",
+        "type": "component",
+        "file": "src\\app\\(dashboard)\\layout.tsx"
+      },
+      {
+        "id": "product-form",
+        "type": "component",
+        "file": "src\\app\\(dashboard)\\products\\product-form.tsx"
+      },
+      {
+        "id": "category-manager",
+        "type": "component",
+        "file": "src\\app\\(dashboard)\\products\\category-manager.tsx"
+      },
+      {
+        "id": "category-combobox",
+        "type": "component",
+        "file": "src\\app\\(dashboard)\\products\\category-combobox.tsx"
+      },
+      {
+        "id": "update-dimensions-dialog",
+        "type": "component",
+        "file": "src\\app\\(dashboard)\\orders\\update-dimensions-dialog.tsx"
+      },
+      {
+        "id": "ship-order-dialog",
+        "type": "component",
+        "file": "src\\app\\(dashboard)\\orders\\ship-order-dialog.tsx"
+      },
+      {
+        "id": "page-original",
+        "type": "component",
+        "file": "src\\app\\(dashboard)\\orders\\page-original.tsx"
+      },
+      {
+        "id": "order-details-dialog",
+        "type": "component",
+        "file": "src\\app\\(dashboard)\\orders\\order-details-dialog.tsx"
+      },
+      {
+        "id": "optimized-page",
+        "type": "component",
+        "file": "src\\app\\(dashboard)\\orders\\optimized-page.tsx"
+      },
+      {
+        "id": "create-order-dialog",
+        "type": "component",
+        "file": "src\\app\\(dashboard)\\orders\\create-order-dialog.tsx"
+      },
+      {
+        "id": "address-manager",
+        "type": "component",
+        "file": "src\\app\\(dashboard)\\customers\\address-manager.tsx"
+      },
+      {
+        "id": "edit-coupon-dialog",
+        "type": "component",
+        "file": "src\\app\\(dashboard)\\coupons\\edit-coupon-dialog.tsx"
+      },
+      {
+        "id": "create-coupon-dialog",
+        "type": "component",
+        "file": "src\\app\\(dashboard)\\coupons\\create-coupon-dialog.tsx"
+      },
+      {
+        "id": "coupon-stats-dialog",
+        "type": "component",
+        "file": "src\\app\\(dashboard)\\coupons\\coupon-stats-dialog.tsx"
+      }
+    ],
+    "edges": [
+      {
+        "from": "page",
+        "to": "/api/admin/tracking/status",
+        "type": "uses"
+      },
+      {
+        "from": "page",
+        "to": "/api/tracking/sync",
+        "type": "uses"
+      },
+      {
+        "from": "page",
+        "to": "/api/settings/auto-approval",
+        "type": "uses"
+      },
+      {
+        "from": "page",
+        "to": "/api/settings/delhivery",
+        "type": "uses"
+      },
+      {
+        "from": "page",
+        "to": "/api/settings/checkout",
+        "type": "uses"
+      },
+      {
+        "from": "page",
+        "to": "/api/products",
+        "type": "uses"
+      },
+      {
+        "from": "page",
+        "to": "/api/products/${productId}",
+        "type": "uses"
+      },
+      {
+        "from": "page",
+        "to": "/api/products/${selectedProduct.id}",
+        "type": "uses"
+      },
+      {
+        "from": "page",
+        "to": "/api/orders/${orderId}/ship",
+        "type": "uses"
+      },
+      {
+        "from": "page",
+        "to": "/api/orders/${order.id}",
+        "type": "uses"
+      },
+      {
+        "from": "page",
+        "to": "/api/orders/${order.id}/ship",
+        "type": "uses"
+      },
+      {
+        "from": "page",
+        "to": "/api/orders/bulk-optimized",
+        "type": "uses"
+      },
+      {
+        "from": "page",
+        "to": "/api/customers/${customer.phone}",
+        "type": "uses"
+      },
+      {
+        "from": "page",
+        "to": "/api/admin/coupons",
+        "type": "uses"
+      },
+      {
+        "from": "page",
+        "to": "/api/admin/coupons/${couponId}",
+        "type": "uses"
+      },
+      {
+        "from": "page",
+        "to": "/api/admin/cache/customers",
+        "type": "uses"
+      },
+      {
+        "from": "page",
+        "to": "/api/admin/analytics/traffic-sources",
+        "type": "uses"
+      },
+      {
+        "from": "update-dimensions-dialog",
+        "to": "/api/orders/${orderId}/update-dimensions",
+        "type": "uses"
+      },
+      {
+        "from": "ship-order-dialog",
+        "to": "/api/orders/${orderId}/ship",
+        "type": "uses"
+      },
+      {
+        "from": "page-original",
+        "to": "/api/orders/${orderId}/ship",
+        "type": "uses"
+      },
+      {
+        "from": "page-original",
+        "to": "/api/orders/${order.id}/ship",
+        "type": "uses"
+      },
+      {
+        "from": "page-original",
+        "to": "/api/orders",
+        "type": "uses"
+      },
+      {
+        "from": "page-original",
+        "to": "/api/orders/bulk",
+        "type": "uses"
+      },
+      {
+        "from": "page-original",
+        "to": "/api/orders/${orderId}/approve",
+        "type": "uses"
+      },
+      {
+        "from": "optimized-page",
+        "to": "/api/orders/${orderId}/ship",
+        "type": "uses"
+      },
+      {
+        "from": "optimized-page",
+        "to": "/api/orders/${order.id}",
+        "type": "uses"
+      },
+      {
+        "from": "optimized-page",
+        "to": "/api/orders/${order.id}/ship",
+        "type": "uses"
+      },
+      {
+        "from": "optimized-page",
+        "to": "/api/orders/bulk-optimized",
+        "type": "uses"
+      },
+      {
+        "from": "create-order-dialog",
+        "to": "/api/products",
+        "type": "uses"
+      },
+      {
+        "from": "create-order-dialog",
+        "to": "/api/orders",
+        "type": "uses"
+      },
+      {
+        "from": "create-order-dialog",
+        "to": "/api/pincode/${pincode}",
+        "type": "uses"
+      },
+      {
+        "from": "create-order-dialog",
+        "to": "/api/customers/${formattedPhone}",
+        "type": "uses"
+      },
+      {
+        "from": "address-manager",
+        "to": "/api/pincode/${pincode}",
+        "type": "uses"
+      },
+      {
+        "from": "edit-coupon-dialog",
+        "to": "/api/admin/coupons/${coupon.id}",
+        "type": "uses"
+      },
+      {
+        "from": "create-coupon-dialog",
+        "to": "/api/admin/coupons",
+        "type": "uses"
+      },
+      {
+        "from": "coupon-stats-dialog",
+        "to": "/api/admin/coupons/${coupon.id}/stats",
+        "type": "uses"
+      }
+    ]
+  }
+}

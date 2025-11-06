@@ -1,0 +1,11 @@
+{
+  "scripts": {
+    "docs:generate": "node scripts/generate-docs.js",
+    "docs:serve": "npx http-server docs -p 3001 -o",
+    "docs:update": "npm run docs:generate && echo 'Documentation updated!'",
+    "analyze:deps": "madge --image docs/dependency-graph.svg src/",
+    "analyze:unused": "ts-unused-exports tsconfig.json --showLineNumber",
+    "analyze:bundle": "npx webpack-bundle-analyzer .next/static/chunks/*.js",
+    "docs:watch": "nodemon --watch src --ext ts,tsx,js,jsx --exec 'npm run docs:generate'"
+  }
+}

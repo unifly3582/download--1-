@@ -1,0 +1,124 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* --------------------------------------------------------
+   THEME VARIABLES: Light + Dark Mode (Custom Buggly Theme)
+   -------------------------------------------------------- */
+@layer base {
+  :root {
+    --background: 38 68% 93%;
+    --foreground: 25 25% 36%;
+
+    --card: 36 100% 95%;
+    --card-foreground: 25 25% 36%;
+
+    --popover: 36 100% 95%;
+    --popover-foreground: 25 25% 36%;
+
+    --primary: 133 40% 30%;
+    --primary-foreground: 38 100% 98%;
+
+    --secondary: 38 56% 83%;
+    --secondary-foreground: 25 25% 36%;
+
+    --muted: 38 56% 83%;
+    --muted-foreground: 25 25% 45%;
+
+    --accent: 137 39% 20%;
+    --accent-foreground: 38 100% 98%;
+
+    --destructive: 5 62% 48%;
+    --destructive-foreground: 38 100% 98%;
+
+    --border: 38 43% 82%;
+    --input: 38 43% 82%;
+    --ring: 133 40% 30%;
+
+    --chart-1: 133 40% 30%;
+    --chart-2: 137 39% 20%;
+    --chart-3: 43 74% 58%;
+    --chart-4: 89 25% 54%;
+    --chart-5: 5 62% 48%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 36 100% 95%;
+    --sidebar-foreground: 25 25% 36%;
+    --sidebar-primary: 133 40% 30%;
+    --sidebar-primary-foreground: 38 100% 98%;
+    --sidebar-accent: 137 39% 20%;
+    --sidebar-accent-foreground: 38 100% 98%;
+    --sidebar-border: 38 43% 82%;
+    --sidebar-ring: 133 40% 30%;
+  }
+
+  .dark {
+    --background: 137 39% 20%;
+    --foreground: 38 68% 93%;
+
+    --card: 137 39% 25%;
+    --card-foreground: 38 68% 93%;
+
+    --popover: 137 39% 25%;
+    --popover-foreground: 38 68% 93%;
+
+    --primary: 133 40% 50%;
+    --primary-foreground: 25 25% 10%;
+
+    --secondary: 137 39% 30%;
+    --secondary-foreground: 38 68% 93%;
+
+    --muted: 137 39% 30%;
+    --muted-foreground: 38 68% 80%;
+
+    --accent: 133 40% 50%;
+    --accent-foreground: 25 25% 10%;
+
+    --destructive: 5 62% 58%;
+    --destructive-foreground: 25 25% 10%;
+
+    --border: 137 39% 30%;
+    --input: 137 39% 30%;
+    --ring: 133 40% 50%;
+
+    --chart-1: 133 40% 50%;
+    --chart-2: 137 39% 40%;
+    --chart-3: 43 74% 68%;
+    --chart-4: 89 25% 64%;
+    --chart-5: 5 62% 58%;
+
+    --sidebar-background: 137 39% 25%;
+    --sidebar-foreground: 38 68% 93%;
+    --sidebar-primary: 133 40% 50%;
+    --sidebar-primary-foreground: 25 25% 10%;
+    --sidebar-accent: 133 40% 50%;
+    --sidebar-accent-foreground: 25 25% 10%;
+    --sidebar-border: 137 39% 30%;
+    --sidebar-ring: 133 40% 50%;
+  }
+
+  /* Force global theme background & text colors */
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* --------------------------------------------------------
+   OPTIONAL ENHANCEMENTS
+   -------------------------------------------------------- */
+
+/* Smooth font rendering and transitions */
+body {
+  @apply antialiased transition-colors duration-300 ease-in-out;
+}
+
+/* Prevent accidental blue highlight on mobile */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Support dark mode transition (optional aesthetic) */
+html.dark {
+  color-scheme: dark;
+}

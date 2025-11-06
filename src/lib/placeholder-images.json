@@ -1,0 +1,40 @@
+{
+  "placeholderImages": [
+    {
+      "id": "login-background",
+      "description": "A rustic barn on a farm at sunrise.",
+      "imageUrl": "https://picsum.photos/seed/loginbg/1920/1080",
+      "imageHint": "farm barn"
+    },
+    {
+      "id": "product-vegetables",
+      "description": "A basket of fresh organic vegetables.",
+      "imageUrl": "https://picsum.photos/seed/veg-basket/400/300",
+      "imageHint": "organic vegetables"
+    },
+    {
+      "id": "product-fruits",
+      "description": "A crate of assorted colorful fruits.",
+      "imageUrl": "https://picsum.photos/seed/fruit-crate/400/300",
+      "imageHint": "fresh fruit"
+    },
+    {
+      "id": "product-dairy",
+      "description": "Artisanal cheese and milk bottles.",
+      "imageUrl": "https://picsum.photos/seed/dairy-farm/400/300",
+      "imageHint": "artisanal cheese"
+    },
+    {
+      "id": "product-bread",
+      "description": "Freshly baked sourdough bread.",
+      "imageUrl": "https://picsum.photos/seed/baked-bread/400/300",
+      "imageHint": "fresh bread"
+    },
+    {
+      "id": "product-honey",
+      "description": "A jar of golden farm honey.",
+      "imageUrl": "https://picsum.photos/seed/farm-honey/400/300",
+      "imageHint": "farm honey"
+    }
+  ]
+}

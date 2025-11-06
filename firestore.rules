@@ -1,0 +1,45 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function to check if a user is signed in.
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if the user has an admin custom claim.
+    function isAdmin() {
+      return request.auth.token.admin == true;
+    }
+    
+    // PRODUCTS can be read by anyone.
+    match /products/{productId} {
+      allow get, list: if true;
+      allow write: if false; // No client-side writes
+    }
+
+    // CUSTOMERS: An admin can read any customer. A regular user can only read their own document.
+    match /customers/{customerId} {
+      allow get: if isAdmin() || (isSignedIn() && request.auth.uid == customerId);
+      allow list: if isAdmin(); // Only admins can list all customers
+      allow write: if false; // No client-side writes
+    }
+
+    // ORDERS: An admin can list/get any order. A regular user can only read their own orders.
+    // Direct order creation or updating from the client is disabled to force all mutations 
+    // through the secure backend API.
+    match /orders/{orderId} {
+      allow get, list: if isAdmin() || (isSignedIn() && resource.data.customerId == request.auth.uid);
+      allow create, update, delete: if false;
+    }
+    
+    // PACKAGING COMBINATIONS are a server-only collection.
+    match /packagingCombinations/{combinationId} {
+        allow read, write: if false;
+    }
+
+    // Default deny: By default, no document is accessible unless a rule above specifically allows it.
+    // We no longer have the dangerous `match /{document=**}` rule.
+  }
+}
