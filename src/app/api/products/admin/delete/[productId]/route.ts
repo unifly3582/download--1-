@@ -8,11 +8,11 @@ import { withAuth, AuthContext } from '@/lib/auth/withAuth';
  */
 async function deleteProductHandler(
   request: NextRequest,
-  { params }: { params: { productId: string } },
+  { params }: { params: Promise<{ productId: string }> },
   authContext: AuthContext
 ) {
   try {
-    const { productId } = params;
+    const { productId } = await params;
     const productRef = db.collection('products').doc(productId);
 
     const docSnap = await productRef.get();

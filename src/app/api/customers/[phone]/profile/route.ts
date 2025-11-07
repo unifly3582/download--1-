@@ -5,10 +5,11 @@ import { withAuth } from '@/lib/auth/withAuth';
 
 async function getCustomerProfileHandler(
   request: NextRequest,
-  { params }: { params: { phone: string } }
+  { params }: { params: Promise<{ phone: string }> }
 ) {
   try {
-    const phone = decodeURIComponent(params.phone);
+    const { phone: phoneParam } = await params;
+    const phone = decodeURIComponent(phoneParam);
     
     // Get customer basic info
     const customersRef = db.collection('customers');

@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     const isAdmin = isAdminRequest(request);
     
     // Build query
-    let query = db.collection('products');
+    let query: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = db.collection('products');
     
     // Filter by category
     if (category) {

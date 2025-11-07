@@ -8,11 +8,11 @@ import { db } from '@/lib/firebase/server';
  */
 async function getCouponStatsHandler(
   request: NextRequest,
-  context: { params: { couponId: string } },
+  { params }: { params: Promise<{ couponId: string }> },
   authContext: AuthContext
 ) {
   try {
-    const { couponId } = context.params;
+    const { couponId } = await params;
     
     // Check if coupon exists
     const couponDoc = await db.collection('coupons').doc(couponId).get();

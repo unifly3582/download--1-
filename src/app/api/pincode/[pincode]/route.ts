@@ -4,10 +4,10 @@ const PINCODE_API_URL = 'https://api.postalpincode.in/pincode/';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { pincode: string } }
+  { params }: { params: Promise<{ pincode: string }> }
 ) {
   try {
-    const { pincode } = params;
+    const { pincode } = await params;
     
     // Validate pincode format
     if (!pincode || !/^\d{6}$/.test(pincode)) {

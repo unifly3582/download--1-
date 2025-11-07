@@ -9,11 +9,11 @@ import { getCouponStats } from '@/lib/oms/couponSystem';
  */
 async function getCouponHandler(
   request: NextRequest,
-  context: { params: { couponId: string } },
+  { params }: { params: Promise<{ couponId: string }> },
   authContext: AuthContext
 ) {
   try {
-    const { couponId } = (await context).params;
+    const { couponId } = await params;
     
     const couponDoc = await db.collection('coupons').doc(couponId).get();
     
@@ -50,11 +50,11 @@ async function getCouponHandler(
  */
 async function updateCouponHandler(
   request: NextRequest,
-  context: { params: { couponId: string } },
+  { params }: { params: Promise<{ couponId: string }> },
   authContext: AuthContext
 ) {
   try {
-    const { couponId } = (await context).params;
+    const { couponId } = await params;
     const body = await request.json();
     
     // Check if coupon exists
@@ -102,11 +102,11 @@ async function updateCouponHandler(
  */
 async function deleteCouponHandler(
   request: NextRequest,
-  context: { params: { couponId: string } },
+  { params }: { params: Promise<{ couponId: string }> },
   authContext: AuthContext
 ) {
   try {
-    const { couponId } = (await context).params;
+    const { couponId } = await params;
     
     // Check if coupon exists
     const couponDoc = await db.collection('coupons').doc(couponId).get();

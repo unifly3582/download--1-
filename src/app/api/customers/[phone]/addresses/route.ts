@@ -54,10 +54,11 @@ const AddressActionSchema = z.discriminatedUnion('action', [
  */
 async function getAddressesHandler(
   request: NextRequest,
-  { params }: { params: { phone: string } }
+  { params }: { params: Promise<{ phone: string }> }
 ) {
   try {
-    const phone = decodeURIComponent(params.phone);
+    const { phone: phoneParam } = await params;
+    const phone = decodeURIComponent(phoneParam);
     
     const customer = await getCustomerByPhone(phone);
     if (!customer) {
@@ -91,10 +92,11 @@ async function getAddressesHandler(
  */
 async function manageAddressesHandler(
   request: NextRequest,
-  { params }: { params: { phone: string } }
+  { params }: { params: Promise<{ phone: string }> }
 ) {
   try {
-    const phone = decodeURIComponent(params.phone);
+    const { phone: phoneParam } = await params;
+    const phone = decodeURIComponent(phoneParam);
     const body = await request.json();
     
     // Validate request body

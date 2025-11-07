@@ -7,10 +7,10 @@ import { db } from '@/lib/firebase/server';
  */
 export async function GET(
   request: NextRequest,
-  context: { params: { awb: string } }
+  { params }: { params: Promise<{ awb: string }> }
 ) {
   try {
-    const { awb } = (await context).params;
+    const { awb } = await params;
     
     if (!awb) {
       return NextResponse.json({

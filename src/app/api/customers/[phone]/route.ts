@@ -7,10 +7,10 @@ import { withAuth, AuthContext } from '@/lib/auth/withAuth';
 
 async function getCustomerHandler(
   request: NextRequest,
-  { params }: { params: { phone: string } },
+  { params }: { params: Promise<{ phone: string }> },
   authContext: AuthContext
 ): Promise<NextResponse> {
-  const { phone } = params;
+  const { phone } = await params;
   console.log(`[customers API] GET request for customer profile: ${phone}`);
 
   try {
@@ -67,10 +67,10 @@ async function getCustomerHandler(
 
 async function updateCustomerHandler(
   request: NextRequest,
-  { params }: { params: { phone: string } },
+  { params }: { params: Promise<{ phone: string }> },
   authContext: AuthContext
 ): Promise<NextResponse> {
-  const { phone } = params;
+  const { phone } = await params;
   console.log(`[customers API] PUT request for customer: ${phone}`);
 
   try {

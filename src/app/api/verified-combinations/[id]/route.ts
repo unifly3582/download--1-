@@ -17,9 +17,9 @@ const UpdateCombinationSchema = z.object({
  * PUT handler to update a specific product combination.
  * Secured for admin access only.
  */
-async function updateCombinationHandler(request: NextRequest, context: { params: { id: string } }, authContext: AuthContext) {
+async function updateCombinationHandler(request: NextRequest, { params }: { params: Promise<{ id: string }> }, authContext: AuthContext) {
     try {
-        const { id } = context.params;
+        const { id } = await params;
         const docRef = db.collection('verifiedCombinations').doc(id);
         const docSnap = await docRef.get();
 
@@ -41,8 +41,7 @@ async function updateCombinationHandler(request: NextRequest, context: { params:
         return NextResponse.json({ success: true, message: 'Combination updated successfully.' });
 
     } catch (error) {
-        const id = context.params.id;
-        console.error(`[API /verified-combinations] Error updating combination ${id} by user ${authContext.user.uid}:`, error);
+        console.error(`[API /verified-combinations] Error updating combination by user ${authContext.user.uid}:`, error);
         return NextResponse.json({ success: false, error: 'A server error occurred.' }, { status: 500 });
     }
 }
@@ -51,9 +50,9 @@ async function updateCombinationHandler(request: NextRequest, context: { params:
  * DELETE handler to remove a specific product combination.
  * Secured for admin access only.
  */
-async function deleteCombinationHandler(request: NextRequest, context: { params: { id: string } }, authContext: AuthContext) {
+async function deleteCombinationHandler(request: NextRequest, { params }: { params: Promise<{ id: string }> }, authContext: AuthContext) {
     try {
-        const { id } = context.params;
+        const { id } = await params;
         const docRef = db.collection('verifiedCombinations').doc(id);
         const docSnap = await docRef.get();
 
@@ -67,8 +66,7 @@ async function deleteCombinationHandler(request: NextRequest, context: { params:
 
         return NextResponse.json({ success: true, message: 'Combination deleted successfully.' });
     } catch (error) {
-        const id = context.params.id;
-        console.error(`[API /verified-combinations] Error DELETING combination ${id} by user ${authContext.user.uid}:`, error);
+        console.error(`[API /verified-combinations] Error DELETING combination by user ${authContext.user.uid}:`, error);
         return NextResponse.json({ success: false, error: 'A server error occurred.' }, { status: 500 });
     }
 }

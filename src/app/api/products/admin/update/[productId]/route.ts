@@ -10,11 +10,11 @@ import admin from 'firebase-admin';
  */
 async function updateProductHandler(
   request: NextRequest, 
-  { params }: { params: { productId: string } }, 
+  { params }: { params: Promise<{ productId: string }> }, 
   authContext: AuthContext
 ) {
   try {
-    const { productId } = params;
+    const { productId } = await params;
     const body: ProductFormValues = await request.json();
 
     const productRef = db.collection('products').doc(productId);
@@ -44,7 +44,7 @@ async function updateProductHandler(
           price: v.regularPrice,
           salePrice: v.salePrice || null,
           stock: v.stock,
-          attributes: v.attributes || {},
+          attributes: {},
           weight: v.weight,
           dimensions: { 
             l: v.length || 0, 

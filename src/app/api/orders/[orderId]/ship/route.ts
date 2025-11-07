@@ -11,10 +11,10 @@ const ShipBodySchema = z.object({
 
 async function createShipmentHandler(
   request: NextRequest, 
-  context: { params: { orderId: string } }, // The type is correct
+  { params }: { params: Promise<{ orderId: string }> },
   authContext: AuthContext
 ): Promise<NextResponse> {
-  const { orderId } = context.params;
+  const { orderId } = await params;
 
   try {
     const body = await request.json();

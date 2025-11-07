@@ -8,10 +8,11 @@ import { addCorsHeaders } from '@/lib/products/productUtils';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { phone: string } }
+  { params }: { params: Promise<{ phone: string }> }
 ) {
   try {
-    const phone = decodeURIComponent(params.phone);
+    const { phone: phoneParam } = await params;
+    const phone = decodeURIComponent(phoneParam);
     
     const customer = await getCustomerByPhone(phone);
     

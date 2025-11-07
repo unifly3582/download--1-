@@ -21,8 +21,8 @@ function createCombinationHash(items: any[]): string {
   return crypto.createHash('md5').update(skus).digest('hex');
 }
 
-async function updateDimensionsHandler(request: NextRequest, context: { params: { orderId: string } }, authContext: AuthContext) {
-  const { orderId } = context.params;
+async function updateDimensionsHandler(request: NextRequest, { params }: { params: Promise<{ orderId: string }> }, authContext: AuthContext) {
+  const { orderId } = await params;
   const orderRef = db.collection("orders").doc(orderId);
 
   try {

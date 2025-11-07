@@ -6,10 +6,11 @@ import { updateSingleCustomerInCache } from '@/lib/cache/customerCache';
 
 async function updateCustomerHandler(
   request: NextRequest,
-  { params }: { params: { phone: string } }
+  { params }: { params: Promise<{ phone: string }> }
 ) {
   try {
-    const phone = decodeURIComponent(params.phone);
+    const { phone: phoneParam } = await params;
+    const phone = decodeURIComponent(phoneParam);
     const body = await request.json();
     
     // Find the existing customer

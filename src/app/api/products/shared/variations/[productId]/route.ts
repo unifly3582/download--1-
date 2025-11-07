@@ -9,10 +9,10 @@ import { isAdminRequest, addCorsHeaders } from '@/lib/products/productUtils';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { productId: string } }
+  { params }: { params: Promise<{ productId: string }> }
 ) {
   try {
-    const { productId } = params;
+    const { productId } = await params;
     const isAdmin = isAdminRequest(request);
     
     const productRef = db.collection('products').doc(productId);

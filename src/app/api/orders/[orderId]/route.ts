@@ -6,11 +6,11 @@ import { withAuth, AuthContext } from '@/lib/auth/withAuth';
 
 async function getOrderHandler(
   request: NextRequest, 
-  context: { params: { orderId: string } }, 
+  { params }: { params: Promise<{ orderId: string }> }, 
   authContext: AuthContext
 ) {
   try {
-    const { orderId } = context.params;
+    const { orderId } = await params;
     
     const orderDoc = await db.collection('orders').doc(orderId).get();
     

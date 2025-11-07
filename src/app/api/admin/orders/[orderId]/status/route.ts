@@ -30,11 +30,11 @@ const UpdateOrderStatusSchema = z.object({
 
 async function updateOrderStatusHandler(
   request: NextRequest,
-  context: { params: { orderId: string } },
+  { params }: { params: Promise<{ orderId: string }> },
   authContext: AuthContext
 ) {
   try {
-    const { orderId } = context.params;
+    const { orderId } = await params;
     const body = await request.json();
     
     const parseResult = UpdateOrderStatusSchema.safeParse(body);
@@ -185,7 +185,7 @@ async function bulkUpdateStatusHandler(
         };
 
         // Use the same logic as single update
-        const mockContext = { params: { orderId } };
+        const mockContext = { params: Promise.resolve({ orderId }) };
         const mockRequest = {
           json: async () => updateData
         } as NextRequest;

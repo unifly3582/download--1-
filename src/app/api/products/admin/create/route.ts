@@ -38,7 +38,7 @@ async function createProductHandler(request: NextRequest, context: any, authCont
           price: v.regularPrice,
           salePrice: v.salePrice || null,
           stock: v.stock,
-          attributes: v.attributes || {},
+          attributes: {},
           weight: v.weight,
           dimensions: { 
             l: v.length || 0, 

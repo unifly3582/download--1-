@@ -9,10 +9,10 @@ interface ApprovalRequestBody {
 
 async function approveOrderHandler(
   request: NextRequest,
-  { params }: { params: { orderId: string } },
+  { params }: { params: Promise<{ orderId: string }> },
   authContext: AuthContext
 ): Promise<NextResponse> {
-  const { orderId } = params;
+  const { orderId } = await params;
   if (!orderId) {
     return NextResponse.json({ success: false, error: 'Order ID is required' }, { status: 400 });
   }

@@ -17,7 +17,9 @@ export const products: Product[] = [
         sku: 'OVB-STD',
         price: 25.00,
         stock: 150,
-        attributes: { size: 'Standard' }
+        attributes: { size: 'Standard' },
+        weight: 1000,
+        dimensions: { l: 30, b: 20, h: 15 }
       }
     ],
     media: [{ type: 'image', url: productImages.find(p=>p.id==='product-vegetables')?.imageUrl || '' }]
@@ -33,7 +35,9 @@ export const products: Product[] = [
         sku: 'AFC-MED',
         price: 30.00,
         stock: 200,
-        attributes: { size: 'Medium' }
+        attributes: { size: 'Medium' },
+        weight: 1500,
+        dimensions: { l: 35, b: 25, h: 20 }
       }
     ],
     media: [{ type: 'image', url: productImages.find(p=>p.id==='product-fruits')?.imageUrl || '' }]
@@ -49,7 +53,9 @@ export const products: Product[] = [
         sku: 'ACS-GOURMET',
         price: 45.00,
         stock: 80,
-        attributes: { type: 'Gourmet' }
+        attributes: { type: 'Gourmet' },
+        weight: 800,
+        dimensions: { l: 25, b: 20, h: 10 }
       }
     ],
     media: [{ type: 'image', url: productImages.find(p=>p.id==='product-dairy')?.imageUrl || '' }]
@@ -65,7 +71,9 @@ export const products: Product[] = [
         sku: 'SL-CLASSIC',
         price: 8.50,
         stock: 120,
-        attributes: { type: 'Classic' }
+        attributes: { type: 'Classic' },
+        weight: 500,
+        dimensions: { l: 30, b: 15, h: 10 }
       }
     ],
     media: [{ type: 'image', url: productImages.find(p=>p.id==='product-bread')?.imageUrl || '' }]
@@ -81,7 +89,9 @@ export const products: Product[] = [
         sku: 'WH-500G',
         price: 15.75,
         stock: 300,
-        attributes: { size: '500g' }
+        attributes: { size: '500g' },
+        weight: 600,
+        dimensions: { l: 10, b: 10, h: 15 }
       }
     ],
     media: [{ type: 'image', url: productImages.find(p=>p.id==='product-honey')?.imageUrl || '' }]
