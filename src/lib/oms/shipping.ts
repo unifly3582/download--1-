@@ -5,13 +5,14 @@ import { db as adminDb } from "@/lib/firebase/server";
 import { Order } from "@/types/order";
 import admin from "firebase-admin";
 import { AdapterResponse } from "./courierAdapters/types"; // Import the standardized response type
+import { logger } from "@/lib/logger";
 
 export async function createShipment(orderId: string, courier: string, manualAwb?: string) {
   const orderRef = adminDb.collection("orders").doc(orderId);
   const orderSnap = await orderRef.get();
   
   if (!orderSnap.exists) {
-    console.error(`[SHIPPING] Attempted to create shipment for non-existent order: ${orderId}`);
+    logger.error('Attempted to create shipment for non-existent order', null, { orderId });
     throw new Error("Order not found");
   }
 
@@ -22,15 +23,16 @@ export async function createShipment(orderId: string, courier: string, manualAwb
   const isPaid = orderData.paymentInfo.status === "Completed";
 
   if (!isCOD && !isPaid) {
-    const errorMessage = `[SHIPPING] BLOCKED: Attempted to create shipment for an unpaid order. OrderID: ${orderId}, Payment Status: ${orderData.paymentInfo.status}`;
-    console.error(errorMessage);
+    logger.error('BLOCKED: Attempted to create shipment for an unpaid order', null, { 
+      orderId, 
+      paymentStatus: orderData.paymentInfo.status 
+    });
     // Return a standardized error shape instead of throwing
     return { success: false, error: "Cannot ship an unpaid order." };
   }
 
   if (!orderData.weight || !orderData.dimensions) {
-    const errorMessage = `[SHIPPING] BLOCKED: Order is missing weight or dimensions. OrderID: ${orderId}`;
-    console.error(errorMessage);
+    logger.error('BLOCKED: Order is missing weight or dimensions', null, { orderId });
     return { success: false, error: "Order is missing weight or dimensions and cannot be shipped." };
   }
 
@@ -47,7 +49,7 @@ export async function createShipment(orderId: string, courier: string, manualAwb
       break;
     default:
       const errorMsg = `Unsupported courier: ${courier}`;
-      console.error(`[SHIPPING] ${errorMsg}`);
+      logger.error('Unsupported courier', null, { courier, orderId });
       return { success: false, error: errorMsg };
   }
 
@@ -64,10 +66,10 @@ export async function createShipment(orderId: string, courier: string, manualAwb
       updatePayload["shipmentInfo.awb"] = result.awb;
       updatePayload["shipmentInfo.trackingUrl"] = result.trackingUrl;
       updatePayload.internalStatus = "shipped";
-      console.log(`[SHIPPING] Successfully created shipment for order: ${orderId} via ${courier}`);
+      logger.info('Successfully created shipment', { orderId, courier, awb: result.awb });
   } else {
       updatePayload["shipmentInfo.error"] = result.error;
-      console.error(`[SHIPPING] Failed to create shipment for order: ${orderId}. Reason: ${result.error}`);
+      logger.error('Failed to create shipment', null, { orderId, courier, error: result.error });
   }
 
   await orderRef.update(updatePayload);
@@ -82,7 +84,7 @@ export async function createShipment(orderId: string, courier: string, manualAwb
       });
     }
   } catch (syncError) {
-    console.error(`[SHIPPING] Customer sync failed for ${orderId}:`, syncError);
+    logger.error('Customer sync failed', syncError, { orderId });
     // Don't fail the shipping if customer sync fails
   }
 
@@ -106,9 +108,9 @@ export async function createShipment(orderId: string, courier: string, manualAwb
       } as Order;
       
       await notificationService.sendOrderShippedNotification(orderForNotification);
-      console.log(`[SHIPPING] WhatsApp shipped notification sent for order: ${orderId}`);
+      logger.info('WhatsApp shipped notification sent', { orderId });
     } catch (notificationError) {
-      console.error(`[SHIPPING] WhatsApp notification failed for ${orderId}:`, notificationError);
+      logger.error('WhatsApp notification failed', notificationError, { orderId });
       // Don't fail the shipping if notification fails
     }
   }

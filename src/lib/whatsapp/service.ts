@@ -9,6 +9,7 @@ import {
   ORDER_OUT_FOR_DELIVERY_TEMPLATE,
   ORDER_DELIVERED_TEMPLATE
 } from './templates';
+import { logger } from '@/lib/logger';
 
 export interface WhatsAppConfig {
   accessToken: string;
@@ -57,8 +58,7 @@ export class WhatsAppService {
         }
       };
 
-      console.log(`[WhatsApp] Sending template ${template.name} to ${cleanPhone}`);
-      console.log(`[WhatsApp] Payload:`, JSON.stringify(payload, null, 2));
+      logger.info(`Sending WhatsApp template ${template.name} to ${cleanPhone}`, { payload });
 
       const response = await fetch(
         `${this.baseUrl}/${this.config.phoneNumberId}/messages`,
@@ -75,7 +75,7 @@ export class WhatsAppService {
       const responseData = await response.json();
 
       if (!response.ok) {
-        console.error(`[WhatsApp] API Error:`, responseData);
+        logger.error('WhatsApp API Error', null, { responseData, status: response.status });
         return {
           success: false,
           error: responseData.error?.message || 'WhatsApp API error',
@@ -83,7 +83,7 @@ export class WhatsAppService {
         };
       }
 
-      console.log(`[WhatsApp] Message sent successfully:`, responseData);
+      logger.info('WhatsApp message sent successfully', { responseData });
       return {
         success: true,
         messageId: responseData.messages?.[0]?.id,
@@ -91,7 +91,7 @@ export class WhatsAppService {
       };
 
     } catch (error: any) {
-      console.error(`[WhatsApp] Service error:`, error);
+      logger.error('WhatsApp service error', error);
       return {
         success: false,
         error: error.message || 'Unknown error occurred',
@@ -236,7 +236,7 @@ export function createWhatsAppService(): WhatsAppService | null {
   const businessAccountId = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID;
 
   if (!accessToken || !phoneNumberId || !businessAccountId) {
-    console.warn('[WhatsApp] Missing required environment variables');
+    logger.warn('WhatsApp missing required environment variables');
     return null;
   }
 

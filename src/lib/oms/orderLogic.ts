@@ -3,6 +3,7 @@ import { db } from "@/lib/firebase/server";
 import { OrderItem } from "@/types/order";
 import { Product } from "@/types/products";
 import crypto from 'crypto';
+import { logger } from "@/lib/logger";
 
 interface OrderWeightAndDimensions {
   weight: number | null;
@@ -36,7 +37,7 @@ export async function getOrderWeightAndDimensions(items: OrderItem[]): Promise<O
       const productRef = db.collection('products').doc(item.productId);
       const doc = await productRef.get();
       if (!doc.exists) {
-        console.error(`[orderLogic] Product with ID ${item.productId} not found.`);
+        logger.error('Product not found', null, { productId: item.productId });
         needsManualVerification = true;
         break;
       }
@@ -50,7 +51,7 @@ export async function getOrderWeightAndDimensions(items: OrderItem[]): Promise<O
     const dims = variation?.dimensions as any;
 
     if (!variation || !variation.weight || variation.weight <= 0 || !dims || dims.l <= 0 || (dims.b === undefined && dims.w === undefined) || (dims.b <= 0 && dims.w <= 0) || dims.h <= 0) {
-        console.error(`[orderLogic] Invalid or missing variation for SKU ${item.sku} in product ${item.productId}.`);
+        logger.error('Invalid or missing variation', null, { sku: item.sku, productId: item.productId });
         needsManualVerification = true;
         break;
     }
@@ -95,7 +96,7 @@ export async function getOrderWeightAndDimensions(items: OrderItem[]): Promise<O
               };
           }
       }
-      console.log(`[orderLogic] Multi-item order needs verification. Hash: ${combinationHash}`);
+      logger.info('Multi-item order needs verification', { combinationHash });
       return { weight: totalWeight, dimensions: packageDimensions, needsManualVerification: true, updatedItems: updatedItems };
   }
 

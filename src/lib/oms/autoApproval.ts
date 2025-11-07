@@ -2,6 +2,7 @@
 import { db as adminDb } from "@/lib/firebase/server";
 import { Order } from "@/types";
 import admin from "firebase-admin";
+import { logger } from "@/lib/logger";
 
 /**
  * AUTO APPROVAL ENGINE
@@ -10,20 +11,20 @@ import admin from "firebase-admin";
 
 export async function runAutoApproval(order: Order, orderId: string): Promise<void> {
   try {
-    console.log(`[OMS][AUTO_APPROVAL] Checking order ${orderId}`);
+    logger.info('Checking order for auto-approval', { orderId });
 
     // Fetch Global Rules
     const settingsRef = adminDb.collection("autoApprovalSettings").doc("GLOBAL_RULES");
     const settingsSnap = await settingsRef.get();
 
     if (!settingsSnap.exists) {
-      console.warn("[OMS][AUTO_APPROVAL] No settings found, skipping auto-approval.");
+      logger.warn('No auto-approval settings found, skipping');
       return;
     }
 
     const settings = settingsSnap.data();
     if (!settings) {
-        console.warn("[OMS][AUTO_APPROVAL] Settings data is empty, skipping auto-approval.");
+        logger.warn('Auto-approval settings data is empty, skipping');
         return;
     }
 
@@ -32,12 +33,12 @@ export async function runAutoApproval(order: Order, orderId: string): Promise<vo
     const customer = customerSnap.data();
 
     if (!customer) {
-      console.warn("[OMS][AUTO_APPROVAL] Customer not found.");
+      logger.warn('Customer not found for auto-approval', { orderId, phone: order.customerInfo.phone });
       return;
     }
 
     if (customer.isDubious) {
-      console.log("[OMS][AUTO_APPROVAL] Customer flagged as dubious. Skipping auto-approval.");
+      logger.info('Customer flagged as dubious, skipping auto-approval', { orderId });
       return;
     }
 
@@ -46,13 +47,13 @@ export async function runAutoApproval(order: Order, orderId: string): Promise<vo
     const isReturningCustomer = customerAgeMs > settings.minCustomerAgeDays * 24 * 60 * 60 * 1000;
 
     if (!isReturningCustomer && !settings.allowNewCustomers) {
-      console.log("[OMS][AUTO_APPROVAL] New customer — requires manual approval.");
+      logger.info('New customer requires manual approval', { orderId });
       return;
     }
 
     // 3️⃣ Order Value Check
     if (order.pricingInfo.grandTotal > settings.maxAutoApprovalValue) {
-      console.log("[OMS][AUTO_APPROVAL] Order exceeds limit, manual approval required.");
+      logger.info('Order exceeds auto-approval limit', { orderId, amount: order.pricingInfo.grandTotal, limit: settings.maxAutoApprovalValue });
       return;
     }
 
@@ -64,7 +65,7 @@ export async function runAutoApproval(order: Order, orderId: string): Promise<vo
         // Firestore doesn't support deep equality checks on arrays of objects directly in where clauses.
         // This query will need to be adjusted based on how the 'items' are stored.
         // For now, we will assume a simple check and log a warning.
-        console.warn("[OMS][AUTO_APPROVAL] Multi-item dimension check is a complex query and needs a more specific implementation.");
+        logger.warn('Multi-item dimension check needs specific implementation', { orderId });
         // const snapshot = await combinationsRef
         //   .where("items", "==", order.items)
         //   .limit(1)
@@ -86,9 +87,9 @@ export async function runAutoApproval(order: Order, orderId: string): Promise<vo
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
     });
 
-    console.log(`[OMS][AUTO_APPROVAL] Order ${orderId} auto-approved.`);
+    logger.info('Order auto-approved', { orderId });
 
   } catch (error: any) {
-    console.error("[OMS][AUTO_APPROVAL][ERROR]", error.message);
+    logger.error('Auto-approval error', error, { orderId });
   }
 }

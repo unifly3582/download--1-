@@ -4,6 +4,7 @@ import { createWhatsAppService, formatPhoneForWhatsApp, SendMessageResponse } fr
 import { OrderNotificationData } from '@/lib/whatsapp/templates';
 import { db } from '@/lib/firebase/server';
 import admin from 'firebase-admin';
+import { logger } from '@/lib/logger';
 
 export interface NotificationLog {
   orderId: string;
@@ -63,10 +64,10 @@ export class OrderNotificationService {
       // Update order with notification timestamp
       await this.updateOrderNotificationTimestamp(order.orderId);
 
-      console.log(`[Notifications] Order placed notification ${result.success ? 'sent' : 'failed'} for ${order.orderId}`);
+      logger.info(`Order placed notification ${result.success ? 'sent' : 'failed'}`, { orderId: order.orderId });
 
     } catch (error: any) {
-      console.error(`[Notifications] Failed to send order placed notification for ${order.orderId}:`, error);
+      logger.error('Failed to send order placed notification', error, { orderId: order.orderId });
       
       await this.logNotification({
         orderId: order.orderId,
@@ -87,12 +88,12 @@ export class OrderNotificationService {
    */
   async sendOrderShippedNotification(order: Order): Promise<void> {
     if (!this.shouldSendNotification(order, 'whatsapp')) {
-      console.log(`[Notifications] Skipping WhatsApp notification for ${order.orderId} - customer opted out`);
+      logger.info('Skipping WhatsApp notification - customer opted out', { orderId: order.orderId });
       return;
     }
 
     if (!order.shipmentInfo.awb || !order.shipmentInfo.courierPartner) {
-      console.warn(`[Notifications] Missing shipping info for ${order.orderId}, skipping shipped notification`);
+      logger.warn('Missing shipping info, skipping shipped notification', { orderId: order.orderId });
       return;
     }
 
@@ -124,10 +125,10 @@ export class OrderNotificationService {
 
       await this.updateOrderNotificationTimestamp(order.orderId);
 
-      console.log(`[Notifications] Order shipped notification ${result.success ? 'sent' : 'failed'} for ${order.orderId}`);
+      logger.info(`Order shipped notification ${result.success ? 'sent' : 'failed'}`, { orderId: order.orderId });
 
     } catch (error: any) {
-      console.error(`[Notifications] Failed to send order shipped notification for ${order.orderId}:`, error);
+      logger.error('Failed to send order shipped notification', error, { orderId: order.orderId });
       
       await this.logNotification({
         orderId: order.orderId,
@@ -178,7 +179,7 @@ export class OrderNotificationService {
       await this.updateOrderNotificationTimestamp(order.orderId);
 
     } catch (error: any) {
-      console.error(`[Notifications] Failed to send order picked notification for ${order.orderId}:`, error);
+      logger.error('Failed to send order picked notification', error, { orderId: order.orderId });
     }
   }
 
@@ -217,7 +218,7 @@ export class OrderNotificationService {
       await this.updateOrderNotificationTimestamp(order.orderId);
 
     } catch (error: any) {
-      console.error(`[Notifications] Failed to send out for delivery notification for ${order.orderId}:`, error);
+      logger.error('Failed to send out for delivery notification', error, { orderId: order.orderId });
     }
   }
 
@@ -256,7 +257,7 @@ export class OrderNotificationService {
       await this.updateOrderNotificationTimestamp(order.orderId);
 
     } catch (error: any) {
-      console.error(`[Notifications] Failed to send order delivered notification for ${order.orderId}:`, error);
+      logger.error('Failed to send order delivered notification', error, { orderId: order.orderId });
     }
   }
 
@@ -316,7 +317,7 @@ export class OrderNotificationService {
         createdAt: admin.firestore.FieldValue.serverTimestamp()
       });
     } catch (error) {
-      console.error('[Notifications] Failed to log notification:', error);
+      logger.error('Failed to log notification', error);
     }
   }
 
@@ -330,7 +331,7 @@ export class OrderNotificationService {
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       });
     } catch (error) {
-      console.error(`[Notifications] Failed to update notification timestamp for ${orderId}:`, error);
+      logger.error('Failed to update notification timestamp', error, { orderId });
     }
   }
 }
