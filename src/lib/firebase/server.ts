@@ -8,14 +8,31 @@ const initAdmin = () => {
     return admin.apps[0];
   }
 
+  // Validate required environment variables
+  const projectId = process.env.FIREBASE_PROJECT_ID;
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+
+  if (!projectId || !clientEmail || !privateKey) {
+    const missing = [];
+    if (!projectId) missing.push('FIREBASE_PROJECT_ID');
+    if (!clientEmail) missing.push('FIREBASE_CLIENT_EMAIL');
+    if (!privateKey) missing.push('FIREBASE_PRIVATE_KEY');
+    
+    throw new Error(
+      `Missing required Firebase environment variables: ${missing.join(', ')}. ` +
+      `Please ensure these are set in your .env.production file or environment.`
+    );
+  }
+
   // If not initialized, create it
   try {
     return admin.initializeApp({
       credential: admin.credential.cert({
-        projectId: process.env.FIREBASE_PROJECT_ID!,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL!,
+        projectId,
+        clientEmail,
         // The private key must have newlines correctly formatted
-        privateKey: process.env.FIREBASE_PRIVATE_KEY!.replace(/\\n/g, '\n'),
+        privateKey: privateKey.replace(/\\n/g, '\n'),
       }),
     });
   } catch (error: any) {
