@@ -7,10 +7,10 @@ import { db } from '@/lib/firebase/server';
  */
 export async function GET(
   request: NextRequest,
-  context: { params: { orderId: string } }
+  { params }: { params: Promise<{ orderId: string }> }
 ) {
   try {
-    const { orderId } = (await context).params;
+    const { orderId } = await params;
     
     if (!orderId) {
       return NextResponse.json({
