@@ -158,7 +158,10 @@ export function CategoryManager() {
             {/* Edit Dialog */}
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                 <DialogContent>
-                    <DialogHeader><DialogTitle>Edit Category</DialogTitle></DialogHeader>
+                    <DialogHeader>
+                        <DialogTitle>Edit Category</DialogTitle>
+                        <DialogDescription>Update the category name.</DialogDescription>
+                    </DialogHeader>
                     <div className="py-4">
                         <Input value={updatedName} onChange={e => setUpdatedName(e.target.value)} />
                     </div>

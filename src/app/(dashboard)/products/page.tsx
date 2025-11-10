@@ -72,14 +72,14 @@ export default function ProductsPage() {
     try {
       if (selectedProduct) {
         // Update existing product
-        await authenticatedFetch(`/api/products/${selectedProduct.id}`, {
+        await authenticatedFetch(`/api/products/admin/update/${selectedProduct.id}`, {
           method: 'PUT',
           body: JSON.stringify(values),
         });
         toast({ title: 'Success', description: 'Product updated successfully.' });
       } else {
         // Create new product
-        await authenticatedFetch('/api/products', {
+        await authenticatedFetch('/api/products/admin/create', {
           method: 'POST',
           body: JSON.stringify(values),
         });

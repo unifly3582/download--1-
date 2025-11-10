@@ -41,13 +41,97 @@ async function getOptimizedOrdersHandler(request: NextRequest, context: any, aut
     query = query.orderBy('createdAt', 'desc').limit(limit);
     
     if (lastOrderId) {
-      const lastDoc = await db.collection('orders').doc(lastOrderId).get();
-      if (lastDoc.exists) {
-        query = query.startAfter(lastDoc);
+      try {
+        const lastDoc = await db.collection('orders').doc(lastOrderId).get();
+        if (lastDoc.exists) {
+          query = query.startAfter(lastDoc);
+        }
+      } catch (error: any) {
+        if (error.code === 16 || error.message?.includes('UNAUTHENTICATED')) {
+          console.log('[orders API] Firebase auth error on cursor doc, skipping pagination');
+        } else {
+          throw error;
+        }
       }
     }
 
-    const snapshot = await query.get();
+    let snapshot: admin.firestore.QuerySnapshot;
+    
+    try {
+      snapshot = await query.get();
+    } catch (queryError: any) {
+      // Handle index building error
+      if (queryError.code === 9 || queryError.message?.includes('FAILED_PRECONDITION') || queryError.message?.includes('index is currently building')) {
+        console.log('[orders API] Index is building, using fallback query without complex filters');
+        
+        // Fallback: Simple query without complex filtering
+        const fallbackQuery = db.collection('orders')
+          .orderBy('createdAt', 'desc')
+          .limit(limit);
+        
+        try {
+          snapshot = await fallbackQuery.get();
+          
+          // Filter results in memory (temporary until indexes are ready)
+          const filteredDocs: any[] = [];
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            let includeDoc = false;
+            
+            switch (status) {
+              case 'to-approve':
+                includeDoc = ['created_pending', 'needs_manual_verification'].includes(data.internalStatus);
+                break;
+              case 'to-ship':
+                includeDoc = ['approved', 'ready_for_shipping'].includes(data.internalStatus);
+                break;
+              case 'in-transit':
+                includeDoc = ['shipped', 'in_transit'].includes(data.internalStatus);
+                break;
+              case 'completed':
+                includeDoc = data.internalStatus === 'delivered';
+                break;
+              case 'rejected':
+                includeDoc = data.approval?.status === 'rejected';
+                break;
+              case 'issues':
+                includeDoc = ['cancelled', 'returned'].includes(data.internalStatus);
+                break;
+              default:
+                includeDoc = true;
+            }
+            
+            if (includeDoc) {
+              filteredDocs.push(doc);
+            }
+          });
+          
+          // Create a mock snapshot with filtered docs
+          const mockSnapshot = {
+            empty: filteredDocs.length === 0,
+            size: filteredDocs.length,
+            forEach: (callback: (doc: any) => void) => {
+              filteredDocs.slice(0, limit).forEach(callback);
+            }
+          };
+          
+          snapshot = mockSnapshot as any;
+          
+        } catch (fallbackError: any) {
+          console.error('[orders API] Fallback query also failed:', fallbackError.message);
+          // Return empty result with helpful message
+          return NextResponse.json({
+            success: true,
+            data: [],
+            hasMore: false,
+            totalCount: 0,
+            message: 'Firestore indexes are still building. Please try again in a few minutes.'
+          });
+        }
+      } else {
+        throw queryError; // Re-throw if it's not an index building error
+      }
+    }
     
     if (snapshot.empty) {
       return NextResponse.json({ 

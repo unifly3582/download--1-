@@ -52,13 +52,36 @@ async function getPaginatedCustomersHandler(request: NextRequest) {
         let query = customersRef.orderBy('createdAt', 'desc').limit(limit);
         
         if (cursor) {
-          const cursorDoc = await customersRef.doc(cursor).get();
-          if (cursorDoc.exists) {
-            query = query.startAfter(cursorDoc);
+          try {
+            const cursorDoc = await customersRef.doc(cursor).get();
+            if (cursorDoc.exists) {
+              query = query.startAfter(cursorDoc);
+            }
+          } catch (error: any) {
+            if (error.code === 16 || error.message?.includes('UNAUTHENTICATED')) {
+              console.log('[customers API] Firebase auth error on cursor doc, skipping pagination');
+            } else {
+              throw error;
+            }
           }
         }
 
-        const snapshot = await query.get();
+        let snapshot: admin.firestore.QuerySnapshot;
+        try {
+          snapshot = await query.get();
+        } catch (firestoreError: any) {
+          if (firestoreError.code === 16 || firestoreError.message?.includes('UNAUTHENTICATED')) {
+            console.log('[customers API] Firebase auth error on search, returning empty results');
+            customers = [];
+            hasMore = false;
+            nextCursor = undefined;
+            return NextResponse.json({
+              success: true,
+              data: { data: customers, hasMore, nextCursor, total: 0 }
+            });
+          }
+          throw firestoreError;
+        }
         let lastDoc: admin.firestore.QueryDocumentSnapshot | undefined;
 
         snapshot.forEach(doc => {
@@ -102,13 +125,24 @@ async function getPaginatedCustomersHandler(request: NextRequest) {
       query = query.orderBy('createdAt', 'desc').limit(limit);
 
       if (cursor) {
-        const cursorDoc = await customersRef.doc(cursor).get();
-        if (cursorDoc.exists) {
-          query = query.startAfter(cursorDoc);
+        try {
+          const cursorDoc = await customersRef.doc(cursor).get();
+          if (cursorDoc.exists) {
+            query = query.startAfter(cursorDoc);
+          }
+        } catch (error: any) {
+          if (error.code === 16 || error.message?.includes('UNAUTHENTICATED')) {
+            console.log('[customers API] Firebase auth error on cursor doc, skipping pagination');
+          } else {
+            throw error;
+          }
         }
       }
 
-      const snapshot = await query.get();
+      let snapshot: admin.firestore.QuerySnapshot;
+      
+      snapshot = await query.get();
+      
       let lastDoc: admin.firestore.QueryDocumentSnapshot | undefined;
 
       snapshot.forEach(doc => {

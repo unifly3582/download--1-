@@ -52,30 +52,45 @@ export default function LoginPage() {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
+    console.log('🔐 Attempting login with email:', values.email);
+    
     try {
+      console.log('🔐 Calling signInWithEmailAndPassword...');
       await signInWithEmailAndPassword(auth, values.email, values.password);
+      console.log('✅ Login successful, redirecting...');
       router.push('/');
     } catch (error: any) {
+        console.error('❌ Login error:', error);
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        
         if (error.code === 'auth/user-not-found') {
             try {
+                console.log('👤 User not found, creating new account...');
+                // createUserWithEmailAndPassword automatically signs in the user
                 await createUserWithEmailAndPassword(auth, values.email, values.password);
-                await signInWithEmailAndPassword(auth, values.email, values.password);
+                console.log('✅ Account created successfully, redirecting...');
                 router.push('/');
-            } catch (creationError) {
+            } catch (creationError: any) {
+                console.error('❌ Account creation error:', creationError);
                 toast({
                     variant: 'destructive',
-                    title: 'Login Failed',
-                    description: 'Could not create user. Please try again.',
+                    title: 'Account Creation Failed',
+                    description: creationError.message || 'Could not create user account. Please try again.',
                 });
-                console.error('User creation error:', creationError);
             }
+        } else if (error.code === 'auth/network-request-failed') {
+            toast({
+                variant: 'destructive',
+                title: 'Network Error',
+                description: 'Firebase connection failed. Check your internet connection and Firebase configuration.',
+            });
         } else {
             toast({
                 variant: 'destructive',
                 title: 'Login Failed',
-                description: 'Invalid email or password. Please try again.',
+                description: error.message || 'Invalid email or password. Please try again.',
             });
-            console.error('Login error:', error);
         }
     } finally {
       setIsLoading(false);

@@ -51,10 +51,10 @@ export function middleware(request: NextRequest) {
   const csp = [
     "default-src 'self'",
     "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.googletagmanager.com",
-    "style-src 'self' 'unsafe-inline'",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: https: blob:",
-    "font-src 'self' data:",
-    "connect-src 'self' https://firebasestorage.googleapis.com https://firestore.googleapis.com https://*.google.com",
+    "font-src 'self' data: https://fonts.gstatic.com",
+    "connect-src 'self' https://firebasestorage.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.google.com https://fonts.googleapis.com",
     "frame-ancestors 'none'",
   ].join('; ');
   
