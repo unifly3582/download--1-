@@ -128,6 +128,28 @@ export async function GET(request: NextRequest) {
 }
 
 /**
+ * POST /api/products - Redirect to correct create endpoint
+ */
+export async function POST(request: NextRequest) {
+  return NextResponse.json({
+    success: false,
+    error: 'Use /api/products/admin/create for creating products',
+    redirect: '/api/products/admin/create'
+  }, { status: 405 });
+}
+
+/**
+ * PUT /api/products - Redirect to correct update endpoint
+ */
+export async function PUT(request: NextRequest) {
+  return NextResponse.json({
+    success: false,
+    error: 'Use /api/products/admin/update/[productId] for updating products',
+    redirect: '/api/products/admin/update/[productId]'
+  }, { status: 405 });
+}
+
+/**
  * Handle OPTIONS for CORS
  */
 export async function OPTIONS(request: NextRequest) {

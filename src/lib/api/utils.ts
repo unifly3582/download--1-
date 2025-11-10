@@ -27,7 +27,18 @@ export async function authenticatedFetch(url: string, options: RequestInit = {})
     headers.set('Content-Type', 'application/json');
 
     const response = await fetch(url, { ...options, headers });
-    const result = await response.json();
+    
+    let result: any;
+    try {
+      result = await response.json();
+    } catch (jsonError) {
+      // If JSON parsing fails, create a generic error response
+      result = {
+        success: false,
+        error: `Request failed with status ${response.status}`,
+        details: `Invalid JSON response from server`
+      };
+    }
 
     if (!response.ok) {
       // Use the server's error message if available, otherwise a default

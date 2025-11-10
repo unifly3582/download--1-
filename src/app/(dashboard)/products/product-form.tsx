@@ -144,7 +144,7 @@ export function ProductForm({ isOpen, onOpenChange, product, onSubmit }: Product
                 sku: v.sku,
                 hsnCode: v.hsnCode || '',
                 regularPrice: v.price,
-                salePrice: v.salePrice || undefined,
+                salePrice: v.salePrice || 0,
                 stock: v.stock,
                 weight: v.weight,
                 length: v.dimensions?.l || 0,
@@ -246,7 +246,7 @@ export function ProductForm({ isOpen, onOpenChange, product, onSubmit }: Product
                 <div>
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-medium">Variations</h3>
-                    <Button type="button" variant="outline" size="sm" onClick={() => appendVariation({ name: '', sku: '', hsnCode: '', regularPrice: 0, salePrice: undefined, stock: 0, weight: 0, length: 0, b: 0, height: 0 })}>
+                    <Button type="button" variant="outline" size="sm" onClick={() => appendVariation({ name: '', sku: '', hsnCode: '', regularPrice: 0, salePrice: 0, stock: 0, weight: 0, length: 0, b: 0, height: 0 })}>
                       Add Variation
                     </Button>
                   </div>

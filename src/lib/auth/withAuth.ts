@@ -30,12 +30,26 @@ export function withAuth(allowedRoles: Role[]) {
         const idToken = authorization.split('Bearer ')[1];
         try {
           const decodedToken = await auth.verifyIdToken(idToken);
-          if (decodedToken.admin === true && allowedRoles.includes('admin')) {
+          
+          console.log('🔍 Auth Debug - User email:', decodedToken.email);
+          console.log('🔍 Auth Debug - Admin claim:', decodedToken.admin);
+          
+          // Temporary admin access for specific users while they refresh their tokens
+          const isTemporaryAdmin = decodedToken.email === 'vaibhav@gmail.com' || decodedToken.email === 'uniflyinsect@gmail.com';
+          console.log('🔍 Auth Debug - Is temporary admin:', isTemporaryAdmin);
+          
+          if ((decodedToken.admin === true || isTemporaryAdmin) && allowedRoles.includes('admin')) {
+            console.log('✅ Auth Debug - Access granted');
             return handler(request, context, { user: decodedToken });
+          } else {
+            console.log('❌ Auth Debug - Access denied - admin:', decodedToken.admin, 'tempAdmin:', isTemporaryAdmin);
           }
-        } catch (error) {
+        } catch (error: any) {
+          console.log('❌ Auth Debug - Token verification failed:', error.message);
           // Token is invalid or expired.
         }
+      } else {
+        console.log('❌ Auth Debug - No authorization header or invalid format');
       }
 
       // Check 2: Machine User (via API Key)
