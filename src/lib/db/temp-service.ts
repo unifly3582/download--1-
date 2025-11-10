@@ -1,5 +1,6 @@
 // Temporary database service that handles Firebase Admin SDK issues
 import { db as originalDb } from '@/lib/firebase/server';
+import type { DocumentData, QueryDocumentSnapshot } from 'firebase-admin/firestore';
 
 /**
  * Wrapper for Firestore operations that handles authentication errors gracefully
@@ -49,7 +50,7 @@ export class TemporaryDbService {
       const snapshot = await query.get();
       return {
         success: true,
-        data: snapshot.docs.map(doc => ({
+        data: snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
           id: doc.id,
           ...doc.data(),
           // Convert Firestore timestamps to ISO strings
