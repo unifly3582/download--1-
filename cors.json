@@ -6,8 +6,14 @@
             "https://admin.jarakitchen.com",
             "https://buggly-adminpanel.firebaseapp.com"
         ],
-        "method": ["GET", "PUT", "POST", "DELETE"],
-        "responseHeader": ["Content-Type", "Authorization"],
+        "method": ["GET", "PUT", "POST", "DELETE", "HEAD", "OPTIONS"],
+        "responseHeader": [
+            "Content-Type", 
+            "Authorization", 
+            "x-goog-resumable",
+            "x-goog-meta-*",
+            "x-firebase-*"
+        ],
         "maxAgeSeconds": 3600
     }
 ]

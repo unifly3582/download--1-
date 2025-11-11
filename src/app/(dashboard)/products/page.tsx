@@ -56,7 +56,8 @@ export default function ProductsPage() {
       return;
     }
     try {
-      await authenticatedFetch(`/api/products/${productId}`, {
+      // Use the admin delete endpoint which accepts DELETE for products
+      await authenticatedFetch(`/api/products/admin/delete/${productId}`, {
         method: 'DELETE',
       });
       toast({ title: 'Success', description: 'Product deleted successfully.' });
