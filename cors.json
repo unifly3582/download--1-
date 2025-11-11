@@ -1,6 +1,11 @@
 [
     {
-        "origin": ["*"],
+        "origin": [
+            "http://localhost:3000",
+            "http://localhost:9006",
+            "https://admin.jarakitchen.com",
+            "https://buggly-adminpanel.firebaseapp.com"
+        ],
         "method": ["GET", "PUT", "POST", "DELETE"],
         "responseHeader": ["Content-Type", "Authorization"],
         "maxAgeSeconds": 3600
