@@ -79,7 +79,7 @@ export const ShipmentInfoSchema = z.object({
 
 const CustomerInfoSchema = z.object({
     customerId: z.string(),
-    name: z.string(),
+    name: z.string().min(2, "Customer name must be at least 2 characters long").trim(),
     phone: z.string(),
     email: z.string().email().optional()
   });
