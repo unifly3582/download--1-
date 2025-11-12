@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     const { weight, dimensions, needsManualVerification } = await getOrderWeightAndDimensions(itemsWithDetails);
     
     // Generate order ID
-    const orderId = generateOrderId();
+    const orderId = await generateOrderId();
     
     // Create order object
     const newOrder = {
@@ -254,11 +254,48 @@ async function validateAndEnrichItems(items: any[]) {
 }
 
 /**
- * Generate order ID
+ * Generate order ID with new format ORDddmmyy-5xxx
  */
-function generateOrderId(): string {
-  const year = new Date().getFullYear();
-  return `ORD_${year}_${uuidv4().slice(0, 8).toUpperCase()}`;
+async function generateOrderId(): Promise<string> {
+  const now = new Date();
+  const dd = String(now.getDate()).padStart(2, '0');
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const yy = String(now.getFullYear()).slice(-2);
+  const datePrefix = `ORD${dd}${mm}${yy}`;
+  
+  // Query existing orders for today to find the next number
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  
+  try {
+    const snapshot = await db.collection('orders')
+      .where('createdAt', '>=', todayStart)
+      .where('createdAt', '<', todayEnd)
+      .orderBy('createdAt', 'desc')
+      .limit(1)
+      .get();
+    
+    let nextNumber = 5000; // Start at 5000 for new days
+    
+    if (!snapshot.empty) {
+      const lastOrder = snapshot.docs[0];
+      const lastOrderId = lastOrder.data().orderId;
+      
+      // Extract number from format ORDddmmyy-xxxx
+      const match = lastOrderId.match(/^ORD\d{6}-(\d+)$/);
+      if (match && lastOrderId.startsWith(datePrefix)) {
+        const lastNumber = parseInt(match[1], 10);
+        nextNumber = lastNumber + 1;
+      }
+    }
+    
+    return `${datePrefix}-${nextNumber}`;
+  } catch (error) {
+    console.error('[CUSTOMER_ORDER_ID_GENERATION] Error querying existing orders:', error);
+    // Fallback to random number if query fails
+    const randomNum = 5000 + Math.floor(Math.random() * 1000);
+    return `${datePrefix}-${randomNum}`;
+  }
 }
 
 /**
