@@ -38,8 +38,8 @@ export function UpdateDimensionsDialog({ isOpen, onOpenChange, orderId, onDimens
           weight: parseFloat(weight),
           dimensions: {
             l: parseFloat(length),
-            // IMPORTANT: The backend API expects 'w' for width, not 'b'.
-            w: parseFloat(width),
+            // CORRECTED: The backend API expects 'b' for width (breadth), not 'w'.
+            b: parseFloat(width),
             h: parseFloat(height),
           },
         }),

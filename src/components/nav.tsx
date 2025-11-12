@@ -40,20 +40,22 @@ export function Nav() {
 
   return (
     <>
-      <SidebarHeader>
+      <SidebarHeader className="p-2">
         <Logo />
       </SidebarHeader>
-      <SidebarContent>
-        <SidebarMenu>
+      <SidebarContent className="p-2">
+        <SidebarMenu className="space-y-1">
           {navItems.map((item) => (
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 asChild
                 isActive={pathname === item.href}
                 tooltip={item.label}
+                size="sm"
+                className="px-2 py-1.5 text-xs"
               >
                 <Link href={item.href}>
-                  <item.icon />
+                  <item.icon className="h-3.5 w-3.5" />
                   <span>{item.label}</span>
                 </Link>
               </SidebarMenuButton>

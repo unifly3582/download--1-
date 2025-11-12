@@ -257,44 +257,50 @@ async function validateAndEnrichItems(items: any[]) {
  * Generate order ID with new format ORDddmmyy-5xxx
  */
 async function generateOrderId(): Promise<string> {
-  const now = new Date();
-  const dd = String(now.getDate()).padStart(2, '0');
-  const mm = String(now.getMonth() + 1).padStart(2, '0');
-  const yy = String(now.getFullYear()).slice(-2);
-  const datePrefix = `ORD${dd}${mm}${yy}`;
-  
-  // Query existing orders for today to find the next number
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-  
   try {
+    // Query the latest order to get the highest numeric ID
     const snapshot = await db.collection('orders')
-      .where('createdAt', '>=', todayStart)
-      .where('createdAt', '<', todayEnd)
       .orderBy('createdAt', 'desc')
-      .limit(1)
+      .limit(10) // Get more results to handle mixed formats during transition
       .get();
     
-    let nextNumber = 5000; // Start at 5000 for new days
+    let nextNumber = 1; // Start at 1 for the first order
     
     if (!snapshot.empty) {
-      const lastOrder = snapshot.docs[0];
-      const lastOrderId = lastOrder.data().orderId;
+      let highestNumber = 0;
       
-      // Extract number from format ORDddmmyy-xxxx
-      const match = lastOrderId.match(/^ORD\d{6}-(\d+)$/);
-      if (match && lastOrderId.startsWith(datePrefix)) {
-        const lastNumber = parseInt(match[1], 10);
-        nextNumber = lastNumber + 1;
-      }
+      // Look through recent orders to find the highest numeric ID
+      snapshot.docs.forEach(doc => {
+        const orderId = doc.data().orderId;
+        
+        // Check if it's a pure number (new format)
+        if (/^\d+$/.test(orderId)) {
+          const num = parseInt(orderId, 10);
+          if (num > highestNumber) {
+            highestNumber = num;
+          }
+        }
+        // Handle old format ORDddmmyy-xxxx during transition
+        else if (/^ORD\d{6}-(\d+)$/.test(orderId)) {
+          const match = orderId.match(/^ORD\d{6}-(\d+)$/);
+          if (match) {
+            const num = parseInt(match[1], 10);
+            if (num > highestNumber) {
+              highestNumber = num;
+            }
+          }
+        }
+      });
+      
+      nextNumber = highestNumber + 1;
     }
     
-    return `${datePrefix}-${nextNumber}`;
+    return nextNumber.toString();
   } catch (error) {
     console.error('[CUSTOMER_ORDER_ID_GENERATION] Error querying existing orders:', error);
-    // Fallback to random number if query fails
-    const randomNum = 5000 + Math.floor(Math.random() * 1000);
-    return `${datePrefix}-${randomNum}`;
+    // Fallback to timestamp-based number if query fails
+    const timestamp = Date.now();
+    return timestamp.toString();
   }
 }
 
