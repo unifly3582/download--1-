@@ -55,6 +55,13 @@ async function updateDimensionsHandler(request: NextRequest, { params }: { param
     });
 
     console.log(`[API /update-dimensions] Dimensions for order ${orderId} updated by user ${authContext.user.uid}.`);
+    
+    // Trigger auto-approval after dimensions are updated
+    const { runAutoApproval } = await import('@/lib/oms/autoApproval');
+    const updatedOrderSnap = await orderRef.get();
+    const updatedOrderData = updatedOrderSnap.data() as Order;
+    runAutoApproval(updatedOrderData, orderId);
+    
     return NextResponse.json({ success: true, message: 'Order dimensions updated and combination has been cached.' });
 
   } catch (error) {

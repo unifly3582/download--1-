@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase/server';
+import { toCustomerView } from '@/lib/oms/orderViews';
+import { OrderSchema } from '@/types/order';
 
 /**
  * GET /api/customer/orders/[orderId]
@@ -19,8 +21,8 @@ export async function GET(
       }, { status: 400 });
     }
     
-    // Get customer order
-    const orderDoc = await db.collection('customerOrders').doc(orderId).get();
+    // Get from orders collection
+    const orderDoc = await db.collection('orders').doc(orderId).get();
     
     if (!orderDoc.exists) {
       return NextResponse.json({
@@ -29,14 +31,31 @@ export async function GET(
       }, { status: 404 });
     }
     
+    const data = orderDoc.data()!;
     const orderData = {
-      id: orderDoc.id,
-      ...orderDoc.data()
+      ...data,
+      createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+      updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
+      approval: {
+        ...data.approval,
+        approvedAt: data.approval?.approvedAt?.toDate?.()?.toISOString() || data.approval?.approvedAt
+      }
     };
+    
+    const orderValidation = OrderSchema.safeParse(orderData);
+    if (!orderValidation.success) {
+      console.error('[CUSTOMER_ORDER_DETAIL] Invalid order data:', orderValidation.error);
+      return NextResponse.json({
+        success: false,
+        error: 'Invalid order data'
+      }, { status: 500 });
+    }
+    
+    const customerOrder = toCustomerView(orderValidation.data);
     
     return NextResponse.json({
       success: true,
-      data: orderData
+      data: customerOrder
     });
     
   } catch (error: any) {

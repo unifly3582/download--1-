@@ -126,14 +126,6 @@ async function updateOrderStatusHandler(
           // Don't fail the status update if notification fails
         }
       }
-
-      // Sync to customer orders
-      try {
-        const { syncCustomerOrder } = await import('@/lib/oms/customerOrderSync');
-        await syncCustomerOrder(orderId, orderValidation.data);
-      } catch (syncError) {
-        console.error(`[Order Status] Customer sync failed for ${orderId}:`, syncError);
-      }
     } else {
       console.warn(`[Order Status] Order validation failed for ${orderId}:`, orderValidation.error.flatten());
     }

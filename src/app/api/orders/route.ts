@@ -302,20 +302,12 @@ async function createOrderHandler(request: NextRequest, context: any, authContex
       }
     }
 
+    // Trigger auto-approval for pending orders
     if (internalStatus === "created_pending") {
         runAutoApproval(newOrder as Order, orderId);
     }
 
-    // Sync to customer orders collection
-    try {
-      const { syncCustomerOrder } = await import('@/lib/oms/customerOrderSync');
-      await syncCustomerOrder(orderId, { ...newOrder, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } as any);
-    } catch (syncError) {
-      console.error(`[OMS][ORDER_CREATE] Customer sync failed for ${orderId}:`, syncError);
-      // Don't fail the order creation if customer sync fails
-    }
-
-    // Trigger WhatsApp notification immediately on order creation
+    // Send WhatsApp notification immediately on order creation (regardless of status)
     try {
       const { createNotificationService } = await import('@/lib/oms/notifications');
       const notificationService = createNotificationService();

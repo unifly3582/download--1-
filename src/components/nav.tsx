@@ -12,6 +12,7 @@ import {
   Truck,
   Ticket,
   BarChart3,
+  Box,
 } from 'lucide-react';
 import {
   SidebarContent,
@@ -30,6 +31,7 @@ const navItems = [
   { href: '/tracking', icon: Truck, label: 'Tracking' },
   { href: '/analytics', icon: BarChart3, label: 'Analytics' },
   { href: '/products', icon: Package, label: 'Products' },
+  { href: '/combinations', icon: Box, label: 'Combinations' },
   { href: '/settings', icon: Settings, label: 'Settings' },
   { href: '/settings/checkout', icon: CreditCard, label: 'Checkout Settings' },
   { href: '/settings/delhivery', icon: Truck, label: 'Delhivery Settings' },

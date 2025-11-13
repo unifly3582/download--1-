@@ -1,0 +1,122 @@
+[
+  {
+    "name": "buggly_out_for_delivery",
+    "status": "APPROVED",
+    "category": "UTILITY",
+    "language": "en",
+    "components": [
+      {
+        "type": "HEADER",
+        "format": "TEXT",
+        "text": "Order Update"
+      },
+      {
+        "type": "BODY",
+        "text": "Hi {{1}}! 🚚\n\nYour order {{2}} is out for delivery today!\n\n📦 AWB: {{3}}\n📍 Current Location: {{4}}\n\nYour package will be delivered soon. Please be available to receive it.\n\nThank you for shopping with Buggly Farms! 🌱",
+        "example": {
+          "body_text": [
+            [
+              "rajesh",
+              "2323",
+              "qwe23232323",
+              "delhi hub"
+            ]
+          ]
+        }
+      },
+      {
+        "type": "FOOTER",
+        "text": "Buggly Farms - Healthy Chickens"
+      }
+    ],
+    "id": "684216684466188"
+  },
+  {
+    "name": "bugglysimple",
+    "status": "APPROVED",
+    "category": "UTILITY",
+    "language": "en",
+    "components": [
+      {
+        "type": "BODY",
+        "text": "Dear {{1}},\nYour order has been successfully received (Order No: {{2}}).\nWe will share your tracking ID as soon as your package is dispatched.",
+        "example": {
+          "body_text": [
+            [
+              "rohit",
+              "3434"
+            ]
+          ]
+        }
+      },
+      {
+        "type": "BUTTONS",
+        "buttons": [
+          {
+            "type": "URL",
+            "text": "View order",
+            "url": "https://bugglyfarms.com/orders"
+          }
+        ]
+      }
+    ],
+    "id": "1578409623328903"
+  },
+  {
+    "name": "orderreceivedbuggly",
+    "status": "APPROVED",
+    "category": "MARKETING",
+    "language": "en",
+    "components": [
+      {
+        "type": "BODY",
+        "text": "Hello {{1}},\nThank you for shopping at Buggly Farms! 🌱\n\n✅ Your order #{{2}} has been placed successfully.\n📦 Items: {{3}}\n💰 Total: ₹{{4}}\n📍Address : {{5}}\nPayment Method: {{6}}\n\nWe’ll notify you with a tracking update once your order is handed over to our courier partner.",
+        "example": {
+          "body_text": [
+            [
+              "rohit",
+              "23823",
+              "protein worms",
+              "500",
+              "a-5 hari nagar part 2",
+              "COD"
+            ]
+          ]
+        }
+      },
+      {
+        "type": "FOOTER",
+        "text": "buggly"
+      }
+    ],
+    "id": "4091758927711545"
+  },
+  {
+    "name": "buggly_order_shipped",
+    "status": "APPROVED",
+    "category": "UTILITY",
+    "language": "en",
+    "components": [
+      {
+        "type": "BODY",
+        "text": "Hello {{1}}! 📦\n\nYour order {{2}} has been shipped via Delhivery.\n📋 AWB: {{3}}\n💰 Amount: ₹{{4}}\n💳 Payment: {{5}}\n\nTrack your shipment: https://www.delhivery.com/track-v2/package/{{3}}\nThank you for shopping with us !!",
+        "example": {
+          "body_text": [
+            [
+              "rohit",
+              "287-order",
+              "1827837128383",
+              "230",
+              "cod"
+            ]
+          ]
+        }
+      },
+      {
+        "type": "FOOTER",
+        "text": "- Buggly Farms"
+      }
+    ],
+    "id": "1175229101376565"
+  }
+]

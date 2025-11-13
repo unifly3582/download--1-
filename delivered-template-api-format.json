@@ -1,0 +1,30 @@
+{
+  "name": "buggly_order_delivered",
+  "language": "en",
+  "category": "UTILITY",
+  "components": [
+    {
+      "type": "HEADER",
+      "format": "TEXT",
+      "text": "Delivered Successfully! ✅"
+    },
+    {
+      "type": "BODY",
+      "text": "Hi {{1}}!\n\nGreat news! Your order {{2}} has been delivered successfully! 📦\n\n📋 AWB: {{3}}\n✅ Delivered at: {{4}}\n\nWe hope you love your purchase! Thank you for choosing Buggly Farms. 🌱\n\nHave feedback? We'd love to hear from you!",
+      "example": {
+        "body_text": [
+          [
+            "Rajesh Kumar",
+            "ORD_2025_ABC123",
+            "31232410020904",
+            "2:30 PM"
+          ]
+        ]
+      }
+    },
+    {
+      "type": "FOOTER",
+      "text": "Buggly Farms - Healthy Chickens"
+    }
+  ]
+}

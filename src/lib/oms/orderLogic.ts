@@ -21,9 +21,25 @@ export async function getOrderWeightAndDimensions(items: OrderItem[]): Promise<O
   const productCache = new Map<string, Product>();
 
   for (const item of items) {
+    // If item already has weight and dimensions (from external source), use them
+    if (item.weight && item.dimensions && item.dimensions.l > 0 && item.dimensions.b > 0 && item.dimensions.h > 0) {
+      totalWeight += item.weight * item.quantity;
+      packageDimensions.l = Math.max(packageDimensions.l, item.dimensions.l);
+      packageDimensions.b = Math.max(packageDimensions.b, item.dimensions.b);
+      packageDimensions.h = Math.max(packageDimensions.h, item.dimensions.h);
+      updatedItems.push(item);
+      continue;
+    }
+
+    // If no productId or SKU, and no dimensions provided, needs manual verification
     if (!item.productId || !item.sku) {
+      logger.warn('Item missing productId or SKU, needs manual verification', { 
+        productName: item.productName, 
+        sku: item.sku 
+      });
       needsManualVerification = true;
-      break; 
+      updatedItems.push(item);
+      continue; // Continue to process other items instead of breaking
     }
 
     let productData: Product | undefined = productCache.get(item.productId);
@@ -32,9 +48,13 @@ export async function getOrderWeightAndDimensions(items: OrderItem[]): Promise<O
       const productRef = db.collection('products').doc(item.productId);
       const doc = await productRef.get();
       if (!doc.exists) {
-        logger.error('Product not found', null, { productId: item.productId });
+        logger.warn('Product not found in database, needs manual verification', { 
+          productId: item.productId,
+          productName: item.productName 
+        });
         needsManualVerification = true;
-        break;
+        updatedItems.push(item);
+        continue; // Continue to process other items instead of breaking
       }
       productData = { id: doc.id, ...doc.data() } as Product;
       productCache.set(item.productId, productData);
@@ -46,9 +66,16 @@ export async function getOrderWeightAndDimensions(items: OrderItem[]): Promise<O
     const dims = variation?.dimensions as any;
 
     if (!variation || !variation.weight || variation.weight <= 0 || !dims || dims.l <= 0 || (dims.b === undefined && dims.w === undefined) || (dims.b <= 0 && dims.w <= 0) || dims.h <= 0) {
-        logger.error('Invalid or missing variation', null, { sku: item.sku, productId: item.productId });
+        logger.warn('Invalid or missing variation dimensions', { 
+          sku: item.sku, 
+          productId: item.productId,
+          hasVariation: !!variation,
+          hasWeight: !!variation?.weight,
+          hasDimensions: !!dims
+        });
         needsManualVerification = true;
-        break;
+        updatedItems.push(item);
+        continue; // Continue to process other items instead of breaking
     }
 
     const variationWidth = dims.b ?? dims.w; // Prioritize 'b', fallback to 'w'
@@ -71,7 +98,13 @@ export async function getOrderWeightAndDimensions(items: OrderItem[]): Promise<O
   }
 
   if (needsManualVerification) {
-    return { weight: null, dimensions: null, needsManualVerification: true, updatedItems: items };
+    // Return the best available data even if manual verification is needed
+    return { 
+      weight: totalWeight > 0 ? totalWeight : null, 
+      dimensions: (packageDimensions.l > 0 && packageDimensions.b > 0 && packageDimensions.h > 0) ? packageDimensions : null, 
+      needsManualVerification: true, 
+      updatedItems: updatedItems.length > 0 ? updatedItems : items 
+    };
   }
 
   // Check for verified combinations (both single and multi-item)

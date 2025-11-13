@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from 'next/server';
 import { db } from '@/lib/firebase/server';
 import { Customer, CustomerSchema } from '@/types/customers';
 import { searchCustomersInCache, getCacheStats } from '@/lib/cache/customerCache';
+import { ensureCachePopulated } from '@/lib/cache/autoPopulate';
 import { withAuth } from '@/lib/auth/withAuth';
 import admin from 'firebase-admin';
 
@@ -33,6 +34,9 @@ async function getPaginatedCustomersHandler(request: NextRequest) {
     let hasMore = false;
 
     if (search) {
+      // Ensure cache is populated before searching
+      await ensureCachePopulated();
+      
       // For search, use cache if available (no pagination for search results)
       const cachedResults = searchCustomersInCache(search);
       

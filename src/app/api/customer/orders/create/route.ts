@@ -157,18 +157,6 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // Sync to customer orders collection
-    try {
-      const { syncCustomerOrder } = await import('@/lib/oms/customerOrderSync');
-      await syncCustomerOrder(orderId, { 
-        ...newOrder, 
-        createdAt: new Date().toISOString(), 
-        updatedAt: new Date().toISOString() 
-      } as any);
-    } catch (syncError) {
-      console.error(`[CUSTOMER_ORDER] Customer sync failed for ${orderId}:`, syncError);
-    }
-
     // Trigger WhatsApp notification immediately on order creation
     try {
       const { createNotificationService } = await import('@/lib/oms/notifications');

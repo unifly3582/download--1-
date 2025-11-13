@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase/server';
+import { toCustomerView } from '@/lib/oms/orderViews';
+import { OrderSchema } from '@/types/order';
 
 /**
  * GET /api/customer/tracking/[awb]
@@ -19,9 +21,9 @@ export async function GET(
       }, { status: 400 });
     }
     
-    // Find order by AWB
-    const ordersQuery = db.collection('customerOrders')
-      .where('tracking.awb', '==', awb)
+    // Find order by AWB in orders collection
+    const ordersQuery = db.collection('orders')
+      .where('shipmentInfo.awb', '==', awb)
       .limit(1);
     
     const snapshot = await ordersQuery.get();
@@ -34,32 +36,40 @@ export async function GET(
     }
     
     const orderDoc = snapshot.docs[0];
-    const orderData: any = {
-      id: orderDoc.id,
-      ...orderDoc.data()
+    const data = orderDoc.data();
+    const orderData = {
+      ...data,
+      createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+      updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
+      approval: {
+        ...data.approval,
+        approvedAt: data.approval?.approvedAt?.toDate?.()?.toISOString() || data.approval?.approvedAt
+      }
     };
+    
+    const orderValidation = OrderSchema.safeParse(orderData);
+    if (!orderValidation.success) {
+      return NextResponse.json({
+        success: false,
+        error: 'Invalid order data'
+      }, { status: 500 });
+    }
+    
+    const customerOrder = toCustomerView(orderValidation.data);
     
     // Return only tracking-relevant information for guest users
     const trackingInfo = {
-      orderId: orderData.orderId,
-      orderStatus: orderData.orderStatus,
-      orderDate: orderData.orderDate,
-      
-      // Basic item info (no sensitive details)
-      itemCount: orderData.items?.length || 0,
-      
-      // Tracking details
-      tracking: orderData.tracking,
-      
-      // Delivery address (city/state only for privacy)
+      orderId: customerOrder.orderId,
+      orderStatus: customerOrder.orderStatus,
+      orderDate: customerOrder.orderDate,
+      itemCount: customerOrder.items.length,
+      tracking: customerOrder.tracking,
       deliveryLocation: {
-        city: orderData.shippingAddress?.city,
-        state: orderData.shippingAddress?.state,
-        zip: orderData.shippingAddress?.zip
+        city: customerOrder.shippingAddress.city,
+        state: customerOrder.shippingAddress.state,
+        zip: customerOrder.shippingAddress.zip
       },
-      
-      // Support info
-      supportInfo: orderData.supportInfo
+      supportInfo: customerOrder.supportInfo
     };
     
     return NextResponse.json({
