@@ -27,9 +27,9 @@ export interface OrderNotificationData {
   currentLocation?: string;
 }
 
-// Template 1: Order Placed Confirmation (Updated for your actual template)
+// Template 1: Order Placed Confirmation
 export const ORDER_PLACED_TEMPLATE: WhatsAppTemplate = {
-  name: "buggly_order_confirmation",
+  name: "bugglysimple",
   language: "en",
   components: [
     {
@@ -42,18 +42,6 @@ export const ORDER_PLACED_TEMPLATE: WhatsAppTemplate = {
         {
           type: "text",
           text: "{{2}}" // Order ID
-        },
-        {
-          type: "text", 
-          text: "{{3}}" // Items
-        },
-        {
-          type: "text",
-          text: "{{4}}" // Total Amount
-        },
-        {
-          type: "text",
-          text: "{{5}}" // Address
         }
       ]
     }
@@ -129,7 +117,7 @@ export const ORDER_PICKED_TEMPLATE: WhatsAppTemplate = {
 
 // Template 4: Out for Delivery
 export const ORDER_OUT_FOR_DELIVERY_TEMPLATE: WhatsAppTemplate = {
-  name: "order_out_for_delivery",
+  name: "buggly_out_for_delivery",
   language: "en", 
   components: [
     {
@@ -208,14 +196,11 @@ export function buildWhatsAppTemplate(
         if (param.text) {
           // Replace placeholders with actual data
           switch (template.name) {
-            case "buggly_order_confirmation":
+            case "bugglysimple":
               if (component.type === "body") {
                 const bodyParams = [
                   data.customerName,                    // {{1}} Customer Name
-                  data.orderId,                        // {{2}} Order ID
-                  data.items,                          // {{3}} Items
-                  `₹${data.orderAmount}`,              // {{4}} Total Amount
-                  data.deliveryAddress || "Address"    // {{5}} Address
+                  data.orderId                          // {{2}} Order ID
                 ];
                 const paramIndex = component.parameters!.indexOf(param);
                 param.text = bodyParams[paramIndex] || param.text;
@@ -250,15 +235,15 @@ export function buildWhatsAppTemplate(
               }
               break;
               
-            case "order_out_for_delivery":
+            case "buggly_out_for_delivery":
               if (component.type === "header") {
-                param.text = data.customerName;
+                // Header has no variables in this template
               } else if (component.type === "body") {
                 const bodyParams = [
-                  data.orderId,
-                  data.awbNumber || "",
-                  data.currentLocation || "",
-                  data.expectedDeliveryDate || "today"
+                  data.customerName,                    // {{1}} Customer Name
+                  data.orderId,                        // {{2}} Order ID
+                  data.awbNumber || "",                // {{3}} AWB Number
+                  data.currentLocation || "Delhi Hub"  // {{4}} Current Location
                 ];
                 const paramIndex = component.parameters!.indexOf(param);
                 param.text = bodyParams[paramIndex] || param.text;
@@ -285,16 +270,11 @@ export function buildWhatsAppTemplate(
 
 // Template message content for reference (what customers will see)
 export const TEMPLATE_MESSAGES = {
-  ORDER_PLACED: `Order Confirmed!
+  ORDER_PLACED: `Dear {{customerName}},
+Your order has been successfully received (Order No: {{orderId}}).
+We will share your tracking ID as soon as your package is dispatched.
 
-Hello {{customerName}}, Thank you for shopping at Buggly Farms! 🌱
-
-✅ Your order #{{orderId}} has been placed successfully.
-📦 Items: {{items}}
-💰 Total: ₹{{orderAmount}}
-📍Address : {{deliveryAddress}}
-
-We'll notify you with a tracking update once your order is handed over to our courier partner.`,
+[View order button]`,
 
   ORDER_SHIPPED: `Hi {{customerName}}! 📦
 

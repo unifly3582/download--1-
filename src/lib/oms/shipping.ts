@@ -66,6 +66,12 @@ export async function createShipment(orderId: string, courier: string, manualAwb
       updatePayload["shipmentInfo.awb"] = result.awb;
       updatePayload["shipmentInfo.trackingUrl"] = result.trackingUrl;
       updatePayload.internalStatus = "shipped";
+      
+      // Enable automatic tracking for API-based couriers (not manual)
+      if (courier !== 'manual') {
+        updatePayload.needsTracking = true;
+      }
+      
       logger.info('Successfully created shipment', { orderId, courier, awb: result.awb });
   } else {
       updatePayload["shipmentInfo.error"] = result.error;

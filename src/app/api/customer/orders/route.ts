@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase/server';
 import { z } from 'zod';
+import { toCustomerViewBatch } from '@/lib/oms/orderViews';
+import { OrderSchema } from '@/types/order';
 
 // Query schema for customer orders
 const CustomerOrdersQuerySchema = z.object({
-  customerId: z.string().optional(),
-  phone: z.string().optional(),
+  customerId: z.string().nullable().optional(),
+  phone: z.string().nullable().optional(),
   limit: z.coerce.number().min(1).max(50).default(20)
 });
 
@@ -41,20 +43,20 @@ export async function GET(request: NextRequest) {
       }, { status: 400 });
     }
     
-    // Build query
-    let query: any = db.collection('customerOrders');
+    // Build query - NOW USING orders COLLECTION
+    let query: any = db.collection('orders');
     
     if (customerId) {
-      query = query.where('customerId', '==', customerId);
+      query = query.where('customerInfo.customerId', '==', customerId);
     } else if (phone) {
       // Format phone number consistently
       const formattedPhone = phone.startsWith('+91') ? phone : `+91${phone.replace(/[^0-9]/g, '').slice(-10)}`;
-      query = query.where('customerPhone', '==', formattedPhone);
+      query = query.where('customerInfo.phone', '==', formattedPhone);
     }
     
     // Order by date and limit
     const snapshot = await query
-      .orderBy('orderDate', 'desc')
+      .orderBy('createdAt', 'desc')
       .limit(limit)
       .get();
     
@@ -66,15 +68,31 @@ export async function GET(request: NextRequest) {
       });
     }
     
-    const orders = snapshot.docs.map((doc: any) => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    // Transform to customer view
+    const orders = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        ...data,
+        createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
+        approval: {
+          ...data.approval,
+          approvedAt: data.approval?.approvedAt?.toDate?.()?.toISOString() || data.approval?.approvedAt
+        }
+      };
+    });
+    
+    const validOrders = orders
+      .map(order => OrderSchema.safeParse(order))
+      .filter(result => result.success)
+      .map(result => result.data!);
+    
+    const customerOrders = toCustomerViewBatch(validOrders);
     
     return NextResponse.json({
       success: true,
-      data: orders,
-      count: orders.length
+      data: customerOrders,
+      count: customerOrders.length
     });
     
   } catch (error: any) {

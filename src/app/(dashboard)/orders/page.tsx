@@ -890,10 +890,15 @@ export default function OrdersPage() {
                 </>
               )}
               {order.internalStatus === 'needs_manual_verification' && (
-                <DropdownMenuItem onClick={() => handleUpdateDimsClick(order)} className="text-orange-600">
-                  <AlertTriangle className="mr-2 h-4 w-4" />
-                  Enter Dimensions
-                </DropdownMenuItem>
+                <>
+                  <DropdownMenuItem onClick={() => handleUpdateDimsClick(order)} className="text-orange-600">
+                    <AlertTriangle className="mr-2 h-4 w-4" />
+                    Enter Dimensions
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleApprovalAction(order.id, 'reject')} className="text-red-600">
+                    Reject Order
+                  </DropdownMenuItem>
+                </>
               )}
               {order.internalStatus === 'approved' && (
                 <>
@@ -906,7 +911,7 @@ export default function OrdersPage() {
                   </DropdownMenuItem>
                 </>
               )}
-              {(order.internalStatus === 'created_pending' || order.internalStatus === 'approved' || order.internalStatus === 'shipped') && (
+              {(order.internalStatus === 'created_pending' || order.internalStatus === 'needs_manual_verification' || order.internalStatus === 'approved' || order.internalStatus === 'shipped') && (
                 <DropdownMenuItem onClick={() => handleCancelOrder(order.id)} className="text-red-600">
                   ❌ Cancel Order
                 </DropdownMenuItem>

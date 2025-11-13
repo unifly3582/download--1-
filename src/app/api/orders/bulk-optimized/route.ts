@@ -58,7 +58,8 @@ async function bulkOrdersOptimizedHandler(
             break;
 
           case 'reject':
-            if (orderData?.internalStatus === 'created_pending') {
+            // Allow rejection for both created_pending and needs_manual_verification
+            if (orderData?.internalStatus === 'created_pending' || orderData?.internalStatus === 'needs_manual_verification') {
               batch.update(orderRef, {
                 'approval.status': 'rejected',
                 'approval.approvedBy': authContext.user.uid,
@@ -94,7 +95,8 @@ async function bulkOrdersOptimizedHandler(
             break;
 
           case 'cancel':
-            const validCancelStatuses = ['created_pending', 'approved', 'ready_for_shipping', 'shipped', 'in_transit'];
+            // Include needs_manual_verification in valid cancel statuses
+            const validCancelStatuses = ['created_pending', 'needs_manual_verification', 'approved', 'ready_for_shipping', 'shipped', 'in_transit'];
             if (validCancelStatuses.includes(orderData?.internalStatus)) {
               batch.update(orderRef, {
                 internalStatus: 'cancelled',

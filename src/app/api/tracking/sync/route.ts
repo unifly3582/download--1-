@@ -149,6 +149,46 @@ async function processTrackingResponse(trackingData: any, orders: any[]) {
         updateData.needsTracking = false;
         updateData['shipmentInfo.trackingDisabledReason'] = `Order ${newStatus}`;
       }
+      
+      // Send WhatsApp notification for key status changes (with duplicate prevention)
+      // NOTE: Only enabled for approved templates. Enable others after Meta approval.
+      const enabledNotifications = {
+        shipped: true,              // ✅ Approved - buggly_order_shipped
+        out_for_delivery: true,     // ✅ Approved - buggly_out_for_delivery
+        delivered: false            // ❌ Not created yet - needs to be submitted to Meta
+      };
+      
+      const lastNotifiedStatus = currentOrder.notificationHistory?.lastNotifiedStatus;
+      const delhiveryStatus = shipment.Status.Status;
+      
+      // Determine if this is "out for delivery" status
+      const isOutForDelivery = delhiveryStatus?.toLowerCase().includes('out for delivery') || 
+                               delhiveryStatus?.toLowerCase().includes('out-for-delivery');
+      
+      let notificationStatus = newStatus;
+      if (isOutForDelivery) {
+        notificationStatus = 'out_for_delivery';
+      }
+      
+      // Only send notification if:
+      // 1. Status notification is enabled (template approved)
+      // 2. We haven't already sent notification for this status
+      const isEnabled = enabledNotifications[notificationStatus as keyof typeof enabledNotifications];
+      const shouldNotify = isEnabled && notificationStatus !== lastNotifiedStatus;
+      
+      if (shouldNotify) {
+        try {
+          await sendStatusNotification(orderDoc.ref, notificationStatus, currentOrder, shipment);
+          updateData['notificationHistory.lastNotifiedStatus'] = notificationStatus;
+          updateData['notificationHistory.lastNotifiedAt'] = new Date().toISOString();
+          console.log(`[TRACKING_SYNC] Notification sent: ${notificationStatus} for ${currentOrder.orderId}`);
+        } catch (notificationError: any) {
+          console.error('[TRACKING_SYNC] Notification failed:', notificationError);
+          // Don't fail the tracking update if notification fails
+        }
+      } else if (!isEnabled && ['shipped', 'out_for_delivery', 'delivered'].includes(notificationStatus)) {
+        console.log(`[TRACKING_SYNC] Notification skipped (not enabled): ${notificationStatus} for ${currentOrder.orderId}`);
+      }
     }
     
     // Update delivery estimate if available
@@ -159,20 +199,6 @@ async function processTrackingResponse(trackingData: any, orders: any[]) {
     
     // Update main order
     await orderDoc.ref.update(updateData);
-    
-    // Sync to customer orders collection
-    try {
-      const { updateCustomerOrderTracking } = await import('@/lib/oms/customerOrderSync');
-      await updateCustomerOrderTracking(orderDoc.id, {
-        currentStatus: shipment.Status.Status,
-        currentLocation: shipment.Status.StatusLocation,
-        lastUpdate: new Date().toISOString(),
-        expectedDeliveryDate: shipment.ExpectedDeliveryDate
-      });
-    } catch (syncError) {
-      console.error(`[TRACKING_SYNC] Customer sync failed for ${orderDoc.id}:`, syncError);
-      // Don't fail the main update if customer sync fails
-    }
     
     updateCount++;
   }
@@ -187,6 +213,8 @@ function mapDelhiveryStatusToInternal(delhiveryStatus: string): string {
     'In Transit': 'in_transit',
     'Pending': 'pending',
     'Dispatched': 'in_transit',
+    'Out for Delivery': 'in_transit',
+    'Out-for-Delivery': 'in_transit',
     'Delivered': 'delivered',
     'RTO Initiated': 'return_initiated',
     'RTO Delivered': 'returned'
@@ -209,6 +237,54 @@ function mapToCustomerStatus(internalStatus: string): string {
   };
   
   return statusMap[internalStatus] || 'processing';
+}
+
+async function sendStatusNotification(
+  orderRef: FirebaseFirestore.DocumentReference,
+  status: string,
+  orderData: any,
+  shipmentData: any
+): Promise<void> {
+  try {
+    const { createNotificationService } = await import('@/lib/oms/notifications');
+    const notificationService = createNotificationService();
+    
+    // Build order object with updated tracking info
+    const orderForNotification = {
+      ...orderData,
+      shipmentInfo: {
+        ...orderData.shipmentInfo,
+        currentTrackingStatus: shipmentData.Status.Status,
+        trackingLocation: shipmentData.Status.StatusLocation,
+        trackingInstructions: shipmentData.Status.Instructions
+      },
+      createdAt: typeof orderData.createdAt === 'string' 
+        ? orderData.createdAt 
+        : orderData.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    // Send appropriate notification based on status
+    switch (status) {
+      case 'shipped':
+        await notificationService.sendOrderShippedNotification(orderForNotification);
+        console.log(`[TRACKING_SYNC] Shipped notification sent for ${orderData.orderId}`);
+        break;
+        
+      case 'out_for_delivery':
+        await notificationService.sendOutForDeliveryNotification(orderForNotification);
+        console.log(`[TRACKING_SYNC] Out for delivery notification sent for ${orderData.orderId}`);
+        break;
+        
+      case 'delivered':
+        await notificationService.sendOrderDeliveredNotification(orderForNotification);
+        console.log(`[TRACKING_SYNC] Delivered notification sent for ${orderData.orderId}`);
+        break;
+    }
+  } catch (error: any) {
+    console.error('[TRACKING_SYNC] Failed to send notification:', error);
+    throw error;
+  }
 }
 
 export const POST = withAuth(['admin', 'machine'])(trackingSync);

@@ -10,10 +10,9 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, MoreHorizontal, Loader2, ChevronDown, Edit } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Loader2, ChevronDown, Edit, Search } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { authenticatedFetch } from '@/lib/api/utils';
-import { useDebounce } from '../../../hooks/useDebounce';
 import { CustomerEditDialog } from './customer-edit-dialog';
 import { CustomerProfileDialog } from './customer-profile-dialog';
 
@@ -34,16 +33,14 @@ interface CustomerProfile extends Customer {
 
 export default function OptimizedCustomersPage() {
   const { toast } = useToast();
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [activeSearchTerm, setActiveSearchTerm] = useState('');
   const [filters, setFilters] = useState({ tier: 'all', segment: 'all', region: 'all' });
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isProfileLoading, setIsProfileLoading] = useState(false);
   const [viewingCustomer, setViewingCustomer] = useState<CustomerProfile | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | undefined>(undefined);
-
-  // Debounce search to reduce API calls
-  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   const {
     customers,
@@ -55,12 +52,28 @@ export default function OptimizedCustomersPage() {
     totalLoaded
   } = useVirtualizedCustomers({
     pageSize: 25,
-    searchTerm: debouncedSearchTerm,
+    searchTerm: activeSearchTerm,
     filters
   });
 
+  const handleSearch = useCallback(() => {
+    setActiveSearchTerm(searchInput.trim());
+  }, [searchInput]);
+
+  const handleSearchKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  }, [handleSearch]);
+
+  const handleClearSearch = useCallback(() => {
+    setSearchInput('');
+    setActiveSearchTerm('');
+  }, []);
+
   const handleFilterChange = useCallback((filterType: string, value: string) => {
-    setSearchTerm(''); // Clear search when filtering
+    setSearchInput(''); // Clear search input when filtering
+    setActiveSearchTerm(''); // Clear active search
     setFilters(prev => ({ ...prev, [filterType]: value }));
   }, []);
 
@@ -182,12 +195,33 @@ export default function OptimizedCustomersPage() {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2 pt-4">
-            <Input 
-              placeholder="Search by name, phone, or email..." 
-              value={searchTerm} 
-              onChange={(e) => setSearchTerm(e.target.value)} 
-              className="max-w-xs" 
-            />
+            <div className="flex items-center gap-2">
+              <Input 
+                placeholder="Search by name, phone, or email..." 
+                value={searchInput} 
+                onChange={(e) => setSearchInput(e.target.value)} 
+                onKeyDown={handleSearchKeyDown}
+                className="max-w-xs" 
+              />
+              <Button 
+                onClick={handleSearch}
+                disabled={isLoading}
+                size="icon"
+                variant="default"
+              >
+                <Search className="h-4 w-4" />
+              </Button>
+              {activeSearchTerm && (
+                <Button 
+                  onClick={handleClearSearch}
+                  disabled={isLoading}
+                  variant="outline"
+                  size="sm"
+                >
+                  Clear
+                </Button>
+              )}
+            </div>
             <Select 
               value={filters.tier} 
               onValueChange={(v) => handleFilterChange('tier', v)}

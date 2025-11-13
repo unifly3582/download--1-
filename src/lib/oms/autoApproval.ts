@@ -14,7 +14,7 @@ export async function runAutoApproval(order: Order, orderId: string): Promise<vo
     logger.info('Checking order for auto-approval', { orderId });
 
     // Fetch Global Rules
-    const settingsRef = adminDb.collection("autoApprovalSettings").doc("GLOBAL_RULES");
+    const settingsRef = adminDb.collection("settings").doc("autoApproval");
     const settingsSnap = await settingsRef.get();
 
     if (!settingsSnap.exists) {
