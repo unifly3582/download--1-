@@ -2,9 +2,9 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { db } from '@/lib/firebase/server';
 import { z } from 'zod';
-import crypto from 'crypto';
 import { Order } from '@/types/order';
 import { withAuth, AuthContext } from '@/lib/auth/withAuth';
+import { CombinationService } from '@/lib/oms/combinationService';
 
 // CORRECTED: This schema now uses 'b' for width to match the central Order type.
 const UpdateDimensionsSchema = z.object({
@@ -16,10 +16,7 @@ const UpdateDimensionsSchema = z.object({
   }),
 });
 
-function createCombinationHash(items: any[]): string {
-  const skus = items.map(item => `${item.sku}_${item.quantity}`).sort().join('S');
-  return crypto.createHash('md5').update(skus).digest('hex');
-}
+
 
 async function updateDimensionsHandler(request: NextRequest, { params }: { params: Promise<{ orderId: string }> }, authContext: AuthContext) {
   const { orderId } = await params;
@@ -41,16 +38,14 @@ async function updateDimensionsHandler(request: NextRequest, { params }: { param
     }
     const orderData = orderSnap.data() as Order;
 
-    const combinationHash = createCombinationHash(orderData.items);
-    const combinationRef = db.collection('verifiedCombinations').doc(combinationHash);
-    const combinationData = { 
-        weight, 
-        dimensions, // This now correctly contains { l, b, h }
-        items: orderData.items, 
-        verifiedAt: new Date(),
-        updatedBy: authContext.user.uid
-    };
-    await combinationRef.set(combinationData, { merge: true });
+    // Save the verified combination using the new service
+    const combinationHash = await CombinationService.saveCombination(
+      orderData.items,
+      weight,
+      dimensions,
+      authContext.user.uid,
+      `Updated via order ${orderId} dimensions`
+    );
 
     await orderRef.update({
       weight: weight,

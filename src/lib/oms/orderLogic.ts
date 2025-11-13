@@ -2,19 +2,14 @@
 import { db } from "@/lib/firebase/server";
 import { OrderItem } from "@/types/order";
 import { Product } from "@/types/products";
-import crypto from 'crypto';
 import { logger } from "@/lib/logger";
+import { CombinationService } from "./combinationService";
 
 interface OrderWeightAndDimensions {
   weight: number | null;
   dimensions: { l: number; b: number; h: number } | null;
   needsManualVerification: boolean;
   updatedItems: OrderItem[]; 
-}
-
-function createCombinationHash(items: OrderItem[]): string {
-  const skus = items.map(item => `${item.sku}_${item.quantity}`).sort().join('S');
-  return crypto.createHash('md5').update(skus).digest('hex');
 }
 
 export async function getOrderWeightAndDimensions(items: OrderItem[]): Promise<OrderWeightAndDimensions> {
@@ -79,25 +74,37 @@ export async function getOrderWeightAndDimensions(items: OrderItem[]): Promise<O
     return { weight: null, dimensions: null, needsManualVerification: true, updatedItems: items };
   }
 
-  if (items.length > 1) {
-      const combinationHash = createCombinationHash(items);
-      const combinationRef = db.collection('verifiedCombinations').doc(combinationHash);
-      const combinationDoc = await combinationRef.get();
+  // Check for verified combinations (both single and multi-item)
+  if (items.length >= 1) {
+      const combination = await CombinationService.findCombination(items);
 
-      if (combinationDoc.exists) {
-          const data = combinationDoc.data();
-          // Ensure the returned dimension object is correct
-          if (data && data.weight > 0 && data.dimensions) {
-              return {
-                  weight: data.weight,
-                  dimensions: { l: data.dimensions.l, b: data.dimensions.b ?? data.dimensions.w, h: data.dimensions.h },
-                  needsManualVerification: false,
-                  updatedItems: updatedItems,
-              };
-          }
+      if (combination && combination.isActive) {
+          // Record usage for analytics
+          await CombinationService.recordUsage(combination.combinationHash);
+          
+          logger.info('Using verified combination', { 
+            combinationHash: combination.combinationHash, 
+            itemCount: items.length,
+            usageCount: combination.usageCount + 1
+          });
+          
+          return {
+              weight: combination.weight,
+              dimensions: combination.dimensions,
+              needsManualVerification: false,
+              updatedItems: updatedItems,
+          };
       }
-      logger.info('Multi-item order needs verification', { combinationHash });
-      return { weight: totalWeight, dimensions: packageDimensions, needsManualVerification: true, updatedItems: updatedItems };
+      
+      // For multi-item orders without verified combinations, require manual verification
+      if (items.length > 1) {
+        const combinationHash = CombinationService.createCombinationHash(items);
+        logger.info('Multi-item order needs verification - no verified combination found', { 
+          combinationHash,
+          itemCount: items.length
+        });
+        return { weight: totalWeight, dimensions: packageDimensions, needsManualVerification: true, updatedItems: updatedItems };
+      }
   }
 
   return {
