@@ -14,6 +14,7 @@ This e-commerce system is built with Next.js and follows a clear API separation 
 - [System Architecture](./architecture/system-overview.md) - High-level system design
 - [API Documentation](./apis/) - Detailed API specifications
 - [Component Dependencies](./components/) - Frontend component relationships
+- [Combination Management System](./combination-management-system.md) - Product combination verification and caching
 
 ## 🔄 Auto-Generated Documentation
 

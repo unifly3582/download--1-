@@ -721,9 +721,31 @@ export default function OrdersPage() {
           />
         </TableCell>
         <TableCell className="font-medium">
-          <div className="flex items-center gap-2">
-            <span>{order.orderId}</span>
-            {getPriorityBadge(priority)}
+          <div className="flex flex-col gap-1 items-start">
+            <span className="text-sm">{order.orderId}</span>
+            <div className="w-fit">
+              {getPriorityBadge(priority)}
+            </div>
+          </div>
+        </TableCell>
+
+        {/* Date Info */}
+        <TableCell>
+          <div className="space-y-0.5">
+            <div className="text-xs font-medium">
+              {new Date(order.createdAt).toLocaleDateString('en-IN', {
+                day: '2-digit',
+                month: '2-digit', 
+                year: 'numeric'
+              })}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {new Date(order.createdAt).toLocaleTimeString('en-IN', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+              })}
+            </div>
           </div>
         </TableCell>
 
@@ -911,7 +933,8 @@ export default function OrdersPage() {
                   className="rounded"
                 />
               </TableHead>
-              <TableHead>Order ID</TableHead>
+              <TableHead className="w-20">Order ID</TableHead>
+              <TableHead className="w-24">Date</TableHead>
               <TableHead>Customer</TableHead>
               <TableHead>Source</TableHead>
               <TableHead>Address & Pincode</TableHead>
@@ -988,7 +1011,8 @@ export default function OrdersPage() {
                 className="rounded"
               />
             </TableHead>
-            <TableHead>Order ID</TableHead>
+            <TableHead className="w-20">Order ID</TableHead>
+            <TableHead className="w-24">Date</TableHead>
             <TableHead>Customer</TableHead>
             <TableHead>Source</TableHead>
             <TableHead>Address & Pincode</TableHead>
@@ -1001,11 +1025,11 @@ export default function OrdersPage() {
         </TableHeader>
         <TableBody>
           {isLoading && sortedOrders.length === 0 ? (
-            <TableRow><TableCell colSpan={10} className="text-center h-24">Loading...</TableCell></TableRow>
+            <TableRow><TableCell colSpan={11} className="text-center h-24">Loading...</TableCell></TableRow>
           ) : sortedOrders.length > 0 ? (
             sortedOrders.map((order) => renderOrderRow(order))
           ) : (
-            <TableRow><TableCell colSpan={10} className="text-center h-24">No orders found in this category.</TableCell></TableRow>
+            <TableRow><TableCell colSpan={11} className="text-center h-24">No orders found in this category.</TableCell></TableRow>
           )}
         </TableBody>
       </Table>

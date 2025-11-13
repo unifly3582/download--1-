@@ -55,10 +55,10 @@ export function createTrackingEvents(orderData: Order): Array<{
   // If shipped, add shipping event
   if (orderData.internalStatus === 'shipped' || orderData.internalStatus === 'in_transit') {
     events.push({
-      timestamp: orderData.shipmentInfo.lastTrackedAt || orderData.updatedAt.toString(),
+      timestamp: orderData.shipmentInfo?.lastTrackedAt || orderData.updatedAt.toString(),
       status: 'Shipped',
       description: 'Your order has been shipped and is on the way',
-      location: orderData.shipmentInfo.trackingLocation || 'In Transit'
+      location: orderData.shipmentInfo?.trackingLocation || 'In Transit'
     });
   }
   
@@ -68,7 +68,7 @@ export function createTrackingEvents(orderData: Order): Array<{
       timestamp: orderData.updatedAt.toString(),
       status: 'Delivered',
       description: 'Your order has been delivered successfully',
-      location: orderData.shipmentInfo.trackingLocation || 'Delivered'
+      location: orderData.shipmentInfo?.trackingLocation || 'Delivered'
     });
   }
   
@@ -86,7 +86,7 @@ export function calculateDeliveryEstimate(orderData: Order): {
   confidence?: string;
 } | undefined {
   // If we have tracking data with expected delivery
-  if (orderData.shipmentInfo.apiResponse?.packages?.[0]?.ExpectedDeliveryDate) {
+  if (orderData.shipmentInfo?.apiResponse?.packages?.[0]?.ExpectedDeliveryDate) {
     const expectedDate = orderData.shipmentInfo.apiResponse.packages[0].ExpectedDeliveryDate;
     return {
       expectedDate,
@@ -112,6 +112,18 @@ export function calculateDeliveryEstimate(orderData: Order): {
  */
 export async function syncCustomerOrder(orderId: string, orderData: Order): Promise<void> {
   try {
+    // Format the created date for display
+    const createdDate = new Date(orderData.createdAt.toString());
+    const formattedDate = createdDate.toLocaleString('en-IN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+      timeZone: 'Asia/Kolkata'
+    });
+
     const customerOrderData: Omit<CustomerOrder, 'createdAt' | 'updatedAt'> = {
       orderId: orderData.orderId,
       customerId: orderData.customerInfo.customerId,
@@ -142,14 +154,14 @@ export async function syncCustomerOrder(orderId: string, orderData: Order): Prom
         zip: orderData.shippingAddress.zip
       },
       
-      // Tracking information
+      // Tracking information (handle undefined values)
       tracking: {
-        courierPartner: orderData.shipmentInfo.courierPartner,
-        awb: orderData.shipmentInfo.awb,
-        trackingUrl: orderData.shipmentInfo.trackingUrl,
-        currentStatus: orderData.shipmentInfo.currentTrackingStatus,
-        currentLocation: orderData.shipmentInfo.trackingLocation,
-        lastUpdate: orderData.shipmentInfo.lastTrackedAt,
+        courierPartner: orderData.shipmentInfo?.courierPartner,
+        awb: orderData.shipmentInfo?.awb,
+        trackingUrl: orderData.shipmentInfo?.trackingUrl,
+        currentStatus: orderData.shipmentInfo?.currentTrackingStatus,
+        currentLocation: orderData.shipmentInfo?.trackingLocation,
+        lastUpdate: orderData.shipmentInfo?.lastTrackedAt,
         expectedDeliveryDate: orderData.deliveryEstimate?.expectedDate,
         deliveryTimeSlot: orderData.deliveryEstimate?.timeSlot,
         trackingEvents: createTrackingEvents(orderData)
@@ -165,12 +177,15 @@ export async function syncCustomerOrder(orderId: string, orderData: Order): Prom
       }
     };
     
-    // Save to customer orders collection
-    await db.collection('customerOrders').doc(orderId).set({
+    // Clean undefined values before saving to Firestore
+    const cleanData = JSON.parse(JSON.stringify({
       ...customerOrderData,
       createdAt: orderData.createdAt,
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
+    }));
+
+    // Save to customer orders collection
+    await db.collection('customerOrders').doc(orderId).set(cleanData, { merge: true });
     
     console.log(`[CUSTOMER_SYNC] Synced customer order: ${orderId}`);
     
