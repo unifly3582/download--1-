@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
     }
     
     // Transform to customer view
-    const orders = snapshot.docs.map(doc => {
+    const orders = snapshot.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
       const data = doc.data();
       return {
         ...data,
@@ -83,9 +83,9 @@ export async function GET(request: NextRequest) {
     });
     
     const validOrders = orders
-      .map(order => OrderSchema.safeParse(order))
-      .filter(result => result.success)
-      .map(result => result.data!);
+      .map((order: any) => OrderSchema.safeParse(order))
+      .filter((result: any) => result.success)
+      .map((result: any) => result.data!);
     
     const customerOrders = toCustomerViewBatch(validOrders);
     
