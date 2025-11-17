@@ -188,7 +188,8 @@ async function calculatePricingInfo(
       taxes, 
       shippingCharges, 
       grandTotal, 
-      codCharges: 0 
+      codCharges: 0,
+      prepaidDiscount: 0
     },
     couponDetails
   };

@@ -3,13 +3,13 @@ import { CustomerCreateOrderSchema } from '@/types/order';
 import { db } from '@/lib/firebase/server';
 import { createOrUpdateCustomer } from '@/lib/oms/customerUtils';
 import { getOrderWeightAndDimensions } from '@/lib/oms/orderLogic';
-import { validateCoupon, calculateDiscount, recordCouponUsage } from '@/lib/oms/couponSystem';
+import { validateCoupon, calculateDiscount } from '@/lib/oms/couponSystem';
+import { createRazorpayOrder } from '@/lib/razorpay/client';
 import admin from 'firebase-admin';
-import { v4 as uuidv4 } from 'uuid';
 
 /**
- * POST /api/customer/orders/create
- * Create order from customer-facing app (no authentication required)
+ * POST /api/razorpay/create-order
+ * Create a pending order and Razorpay payment order for prepaid orders
  */
 export async function POST(request: NextRequest) {
   try {
@@ -27,12 +27,11 @@ export async function POST(request: NextRequest) {
     
     const orderData = parseResult.data;
     
-    // Only allow COD orders through this endpoint
-    // Prepaid orders must go through /api/razorpay/create-order
-    if (orderData.paymentInfo.method !== 'COD') {
+    // Only allow prepaid orders through this endpoint
+    if (orderData.paymentInfo.method !== 'Prepaid') {
       return NextResponse.json({
         success: false,
-        error: 'This endpoint is only for COD orders. Use /api/razorpay/create-order for prepaid orders.'
+        error: 'This endpoint is only for prepaid orders'
       }, { status: 400 });
     }
     
@@ -79,13 +78,12 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // Calculate final pricing - use values from customer app (already calculated on frontend)
+    // Calculate final pricing
     const taxes = orderData.pricingInfo?.taxes || 0;
     const freeShippingCoupon = couponDetails?.couponType === 'free_shipping';
     const shippingCharges = orderData.pricingInfo?.shippingCharges ?? ((subtotal > 500 || freeShippingCoupon) ? 0 : 50);
-    const codCharges = orderData.pricingInfo?.codCharges || 0;
     const prepaidDiscount = orderData.pricingInfo?.prepaidDiscount || 0;
-    const grandTotal = subtotal - discount - prepaidDiscount + taxes + shippingCharges + codCharges;
+    const grandTotal = subtotal - discount - prepaidDiscount + taxes + shippingCharges;
     
     // Get weight and dimensions
     const { weight, dimensions, needsManualVerification } = await getOrderWeightAndDimensions(itemsWithDetails);
@@ -93,8 +91,27 @@ export async function POST(request: NextRequest) {
     // Generate order ID
     const orderId = await generateOrderId();
     
-    // Create order object
-    const newOrder = {
+    // Create Razorpay order
+    const razorpayResult = await createRazorpayOrder(
+      grandTotal,
+      orderId,
+      {
+        name: orderData.customerInfo.name,
+        email: orderData.customerInfo.email,
+        phone: orderData.customerInfo.phone
+      }
+    );
+    
+    if (!razorpayResult.success) {
+      return NextResponse.json({
+        success: false,
+        error: 'Failed to create payment order',
+        details: razorpayResult.error
+      }, { status: 500 });
+    }
+    
+    // Create pending order object (will be confirmed after payment)
+    const pendingOrder = {
       orderId,
       orderSource: 'customer_app' as const,
       
@@ -119,13 +136,14 @@ export async function POST(request: NextRequest) {
         taxes,
         shippingCharges,
         grandTotal,
-        codCharges,
+        codCharges: 0,
         prepaidDiscount
       },
       
       paymentInfo: {
-        method: orderData.paymentInfo.method,
-        status: 'Pending' as const
+        method: 'Prepaid' as const,
+        status: 'Pending' as const,
+        razorpayOrderId: razorpayResult.razorpayOrderId
       },
       
       approval: {
@@ -134,8 +152,8 @@ export async function POST(request: NextRequest) {
       
       shipmentInfo: {},
       
-      internalStatus: needsManualVerification ? 'needs_manual_verification' as const : 'created_pending' as const,
-      customerFacingStatus: 'confirmed' as const,
+      internalStatus: 'payment_pending' as const,
+      customerFacingStatus: 'payment_pending' as const,
       needsTracking: false,
       
       weight,
@@ -143,63 +161,33 @@ export async function POST(request: NextRequest) {
       needsManualWeightAndDimensions: needsManualVerification
     };
     
-    // Save order to database
+    // Save pending order to database
     const orderRef = db.collection('orders').doc(orderId);
     await orderRef.set({
-      ...newOrder,
+      ...pendingOrder,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
     });
     
-    // Record coupon usage if applicable
-    if (couponDetails && orderData.couponCode) {
-      try {
-        await recordCouponUsage(
-          couponDetails.couponId,
-          orderData.couponCode,
-          orderId,
-          customer.customerId,
-          orderData.customerInfo.phone,
-          couponDetails.discountAmount,
-          subtotal
-        );
-      } catch (couponError) {
-        console.error(`[CUSTOMER_ORDER] Coupon usage recording failed for ${orderId}:`, couponError);
-      }
-    }
+    console.log(`[RAZORPAY_ORDER] Pending order created: ${orderId}, Razorpay Order: ${razorpayResult.razorpayOrderId}`);
     
-    // Trigger WhatsApp notification immediately on order creation
-    try {
-      const { createNotificationService } = await import('@/lib/oms/notifications');
-      const notificationService = createNotificationService();
-      const orderWithTimestamps = { 
-        ...newOrder, 
-        createdAt: new Date().toISOString(), 
-        updatedAt: new Date().toISOString() 
-      } as any;
-      await notificationService.sendOrderPlacedNotification(orderWithTimestamps);
-      console.log(`[CUSTOMER_ORDER] WhatsApp notification sent for ${orderId}`);
-    } catch (notificationError) {
-      console.error(`[CUSTOMER_ORDER] Notification failed for ${orderId}:`, notificationError);
-      // Don't fail order creation if notification fails
-    }
-    
-    console.log(`[CUSTOMER_ORDER] Order created: ${orderId} by customer ${customer.customerId}`);
-    
+    // Return Razorpay order details for frontend to initiate payment
     return NextResponse.json({
       success: true,
       orderId,
-      message: 'Order placed successfully',
-      orderDetails: {
-        orderId,
-        totalAmount: grandTotal,
-        discount,
-        expectedDelivery: getExpectedDeliveryDate()
+      razorpayOrderId: razorpayResult.razorpayOrderId,
+      amount: grandTotal,
+      currency: 'INR',
+      keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+      customerInfo: {
+        name: orderData.customerInfo.name,
+        email: orderData.customerInfo.email,
+        phone: orderData.customerInfo.phone
       }
     }, { status: 201 });
     
   } catch (error: any) {
-    console.error('[CUSTOMER_ORDER] Error creating order:', error);
+    console.error('[RAZORPAY_ORDER] Error creating order:', error);
     return NextResponse.json({
       success: false,
       error: 'Failed to create order',
@@ -215,7 +203,6 @@ async function validateAndEnrichItems(items: any[]) {
   const enrichedItems = [];
   
   for (const item of items) {
-    // Get product details
     const productDoc = await db.collection('products').doc(item.productId).get();
     
     if (!productDoc.exists) {
@@ -223,15 +210,12 @@ async function validateAndEnrichItems(items: any[]) {
     }
     
     const product = productDoc.data()!;
-    
-    // Find variation or use default
     let variation = product.variations?.find((v: any) => v.sku === item.sku);
     
     if (!variation) {
       throw new Error(`Product variation not found: ${item.sku}`);
     }
     
-    // Check stock
     if (variation.stock < item.quantity) {
       throw new Error(`Insufficient stock for ${product.name}. Available: ${variation.stock}, Requested: ${item.quantity}`);
     }
@@ -253,34 +237,29 @@ async function validateAndEnrichItems(items: any[]) {
 }
 
 /**
- * Generate order ID with new format ORDddmmyy-5xxx
+ * Generate order ID
  */
 async function generateOrderId(): Promise<string> {
   try {
-    // Query the latest order to get the highest numeric ID
     const snapshot = await db.collection('orders')
       .orderBy('createdAt', 'desc')
-      .limit(10) // Get more results to handle mixed formats during transition
+      .limit(10)
       .get();
     
-    let nextNumber = 1; // Start at 1 for the first order
+    let nextNumber = 1;
     
     if (!snapshot.empty) {
       let highestNumber = 0;
       
-      // Look through recent orders to find the highest numeric ID
       snapshot.docs.forEach(doc => {
         const orderId = doc.data().orderId;
         
-        // Check if it's a pure number (new format)
         if (/^\d+$/.test(orderId)) {
           const num = parseInt(orderId, 10);
           if (num > highestNumber) {
             highestNumber = num;
           }
-        }
-        // Handle old format ORDddmmyy-xxxx during transition
-        else if (/^ORD\d{6}-(\d+)$/.test(orderId)) {
+        } else if (/^ORD\d{6}-(\d+)$/.test(orderId)) {
           const match = orderId.match(/^ORD\d{6}-(\d+)$/);
           if (match) {
             const num = parseInt(match[1], 10);
@@ -296,18 +275,7 @@ async function generateOrderId(): Promise<string> {
     
     return nextNumber.toString();
   } catch (error) {
-    console.error('[CUSTOMER_ORDER_ID_GENERATION] Error querying existing orders:', error);
-    // Fallback to timestamp-based number if query fails
-    const timestamp = Date.now();
-    return timestamp.toString();
+    console.error('[RAZORPAY_ORDER_ID_GENERATION] Error:', error);
+    return Date.now().toString();
   }
-}
-
-/**
- * Calculate expected delivery date
- */
-function getExpectedDeliveryDate(): string {
-  const deliveryDate = new Date();
-  deliveryDate.setDate(deliveryDate.getDate() + 3); // 3 days from now
-  return deliveryDate.toISOString();
 }

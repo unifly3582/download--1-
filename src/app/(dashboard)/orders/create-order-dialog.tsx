@@ -59,7 +59,7 @@ const initialFormData: DialogFormData = {
   customerInfo: { name: '', phone: '' },
   shippingAddress: { street: '', city: '', state: '', zip: '', country: 'India' },
   items: [],
-  adminPricingInfo: { subtotal: 0, discount: 0, shippingCharges: 0, codCharges: 0, taxes: 0, grandTotal: 0 },
+  adminPricingInfo: { subtotal: 0, discount: 0, shippingCharges: 0, codCharges: 0, prepaidDiscount: 0, taxes: 0, grandTotal: 0 },
   paymentInfo: { method: 'COD', status: 'Pending' },
 };
 
@@ -80,6 +80,32 @@ export function CreateOrderDialog({ isOpen, onOpenChange, onOrderCreated }: Crea
   const { toast } = useToast();
 
   // ... (useEffect hooks remain the same) ...
+  // Fetch checkout settings on mount
+  useEffect(() => {
+    const fetchCheckoutSettings = async () => {
+      try {
+        const result = await authenticatedFetch('/api/settings/checkout');
+        if (result.success && result.data) {
+          // Update initial form data with default COD charges
+          setFormData(prev => ({
+            ...prev,
+            adminPricingInfo: {
+              ...prev.adminPricingInfo,
+              codCharges: result.data.codCharges.value,
+              prepaidDiscount: result.data.prepaidDiscount.value
+            }
+          }));
+        }
+      } catch (error) {
+        console.error('Failed to fetch checkout settings:', error);
+      }
+    };
+    
+    if (isOpen) {
+      fetchCheckoutSettings();
+    }
+  }, [isOpen]);
+
   useEffect(() => {
     if (!isOpen) {
       setFormData(initialFormData);
@@ -97,14 +123,15 @@ export function CreateOrderDialog({ isOpen, onOpenChange, onOrderCreated }: Crea
   useEffect(() => {
     const subtotal = internalItems.reduce((acc, item) => acc + item.unitPrice * item.quantity, 0);
     const codCharges = formData.paymentInfo.method === 'COD' ? formData.adminPricingInfo.codCharges || 0 : 0;
-    const grandTotal = subtotal + formData.adminPricingInfo.shippingCharges + formData.adminPricingInfo.taxes + codCharges;
+    const prepaidDiscount = formData.paymentInfo.method === 'Prepaid' ? formData.adminPricingInfo.prepaidDiscount || 0 : 0;
+    const grandTotal = subtotal - prepaidDiscount + formData.adminPricingInfo.shippingCharges + formData.adminPricingInfo.taxes + codCharges;
 
     setFormData(prev => ({
       ...prev,
       items: internalItems,
       adminPricingInfo: { ...prev.adminPricingInfo, subtotal, grandTotal },
     }));
-  }, [internalItems, formData.adminPricingInfo.shippingCharges, formData.adminPricingInfo.taxes, formData.adminPricingInfo.codCharges, formData.paymentInfo.method]);
+  }, [internalItems, formData.adminPricingInfo.shippingCharges, formData.adminPricingInfo.taxes, formData.adminPricingInfo.codCharges, formData.adminPricingInfo.prepaidDiscount, formData.paymentInfo.method]);
 
   // Remove auto-search, only search on button click
 
@@ -579,6 +606,9 @@ export function CreateOrderDialog({ isOpen, onOpenChange, onOrderCreated }: Crea
                   {formData.paymentInfo.method === 'COD' && (
                     <div><Label>COD Charges</Label><Input type='number' value={formData.adminPricingInfo.codCharges} onChange={e => setFormData(p => ({ ...p, adminPricingInfo: { ...p.adminPricingInfo, codCharges: Number(e.target.value) } }))} /></div>
                   )}
+                  {formData.paymentInfo.method === 'Prepaid' && (
+                    <div><Label>Prepaid Discount</Label><Input type='number' value={formData.adminPricingInfo.prepaidDiscount} onChange={e => setFormData(p => ({ ...p, adminPricingInfo: { ...p.adminPricingInfo, prepaidDiscount: Number(e.target.value) } }))} /></div>
+                  )}
                   <div>
                     <Label>Method</Label>
                     <Select value={formData.paymentInfo.method} onValueChange={v => setFormData(p => ({ ...p, paymentInfo: { ...p.paymentInfo, method: v as 'COD' | 'Prepaid' } }))}>
@@ -593,6 +623,7 @@ export function CreateOrderDialog({ isOpen, onOpenChange, onOrderCreated }: Crea
               <div className='flex justify-between'><p>Subtotal:</p><p>{formData.adminPricingInfo.subtotal.toFixed(2)}</p></div>
               <div className='flex justify-between'><p>Shipping:</p><p>{formData.adminPricingInfo.shippingCharges.toFixed(2)}</p></div>
               {formData.paymentInfo.method === 'COD' && <div className='flex justify-between'><p>COD Charges:</p><p>{(formData.adminPricingInfo.codCharges || 0).toFixed(2)}</p></div>}
+              {formData.paymentInfo.method === 'Prepaid' && <div className='flex justify-between text-green-600'><p>Prepaid Discount:</p><p>-{(formData.adminPricingInfo.prepaidDiscount || 0).toFixed(2)}</p></div>}
               <div className='flex justify-between'><p>Taxes:</p><p>{formData.adminPricingInfo.taxes.toFixed(2)}</p></div>
               <div className='flex justify-between font-bold text-lg'><p>Grand Total:</p><p>{formData.adminPricingInfo.grandTotal.toFixed(2)}</p></div>
             </div>
