@@ -18,9 +18,20 @@ export async function GET(request: NextRequest) {
       query = query.where('isActive', '==', isActive === 'true');
     }
     
-    const snapshot = await query.orderBy('displayOrder', 'asc').orderBy('createdAt', 'desc').get();
+    // Try with composite index first, fallback to simple query if index not ready
+    let snapshot;
+    try {
+      snapshot = await query
+        .orderBy('displayOrder', 'asc')
+        .orderBy('createdAt', 'desc')
+        .get();
+    } catch (indexError: any) {
+      // If index not ready, fetch without ordering and sort in memory
+      console.warn('Composite index not ready, using fallback query');
+      snapshot = await query.get();
+    }
     
-    const testimonials = snapshot.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
+    let testimonials = snapshot.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
       const data = doc.data();
       return {
         id: doc.id,
@@ -28,6 +39,14 @@ export async function GET(request: NextRequest) {
         createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
         updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
       };
+    });
+    
+    // Sort in memory if we used the fallback query
+    testimonials.sort((a: any, b: any) => {
+      if (a.displayOrder !== b.displayOrder) {
+        return a.displayOrder - b.displayOrder;
+      }
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
     
     return NextResponse.json({
