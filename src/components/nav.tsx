@@ -13,6 +13,7 @@ import {
   Ticket,
   BarChart3,
   Box,
+  Video,
 } from 'lucide-react';
 import {
   SidebarContent,
@@ -28,6 +29,7 @@ const navItems = [
   { href: '/orders', icon: ShoppingCart, label: 'Orders' },
   { href: '/customers', icon: Users, label: 'Customers' },
   { href: '/coupons', icon: Ticket, label: 'Coupons' },
+  { href: '/testimonials', icon: Video, label: 'Testimonials' },
   { href: '/tracking', icon: Truck, label: 'Tracking' },
   { href: '/analytics', icon: BarChart3, label: 'Analytics' },
   { href: '/products', icon: Package, label: 'Products' },

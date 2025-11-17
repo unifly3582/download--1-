@@ -26,9 +26,10 @@ export const OrderItemSchema = z.object({
 
 export const PricingInfoSchema = z.object({
   subtotal: z.number(),
-  discount: z.number().default(0), // Add discount field
+  discount: z.number().default(0), // Coupon discount
   shippingCharges: z.number().default(0),
   codCharges: z.number().default(0),
+  prepaidDiscount: z.number().default(0), // Prepaid discount from checkout settings
   taxes: z.number().default(0),
   grandTotal: z.number()
 });
@@ -37,6 +38,27 @@ export const PaymentInfoSchema = z.object({
     method: z.enum(["COD", "Prepaid"]),
     status: z.enum(["Pending", "Completed", "Failed", "Refunded"]).default("Pending"),
     transactionId: z.string().optional(),
+    razorpayOrderId: z.string().optional(),
+    
+    // Payment failure tracking
+    failureReason: z.string().optional(),
+    errorCode: z.string().optional(),
+    lastFailedPaymentId: z.string().optional(),
+    
+    // Payment authorization tracking
+    authorizedPaymentId: z.string().optional(),
+    authorizationStatus: z.string().optional(),
+    
+    // Payment capture tracking
+    capturedPaymentId: z.string().optional(),
+    capturedAmount: z.number().optional(),
+    captureStatus: z.string().optional(),
+    
+    // Refund tracking
+    refundId: z.string().optional(),
+    refundAmount: z.number().optional(),
+    refundStatus: z.enum(["initiated", "completed"]).optional(),
+    refundCompletedAt: TimestampSchema.optional(),
 });
 
 export const ApprovalInfoSchema = z.object({
@@ -113,14 +135,14 @@ export const OrderSchema = z.object({
   approval: ApprovalInfoSchema,
   shipmentInfo: ShipmentInfoSchema,
   internalStatus: z.enum([
-    "created_pending", "approved", "ready_for_shipping",
+    "payment_pending", "created_pending", "approved", "ready_for_shipping",
     "shipped", "in_transit", "pending", "delivered",
     "return_initiated", "returned", "cancelled", "needs_manual_verification"
   ]),
   
   // Customer-facing fields
   customerFacingStatus: z.enum([
-    "confirmed", "processing", "shipped", "out_for_delivery", 
+    "payment_pending", "confirmed", "processing", "shipped", "out_for_delivery", 
     "delivered", "cancelled", "returned"
   ]).optional(),
   
@@ -296,7 +318,15 @@ export const CustomerCreateOrderSchema = z.object({
   // Payment Method
   paymentInfo: z.object({
     method: z.enum(["COD", "Prepaid"])
-  })
+  }),
+  
+  // Pricing Info (calculated on frontend using checkout settings)
+  pricingInfo: z.object({
+    shippingCharges: z.number().optional(),
+    codCharges: z.number().optional(),
+    prepaidDiscount: z.number().optional(),
+    taxes: z.number().optional()
+  }).optional()
 });
 
 export type CustomerCreateOrder = z.infer<typeof CustomerCreateOrderSchema>;

@@ -39,6 +39,12 @@ service cloud.firestore {
         allow read, write: if false;
     }
 
+    // TESTIMONIALS: Public can read active testimonials. Admin can manage all.
+    match /testimonials/{testimonialId} {
+      allow read: if true; // Public read access (API filters by isActive)
+      allow write: if false; // No client-side writes
+    }
+
     // Default deny: By default, no document is accessible unless a rule above specifically allows it.
     // We no longer have the dangerous `match /{document=**}` rule.
   }
