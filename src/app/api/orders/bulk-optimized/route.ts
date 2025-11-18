@@ -103,6 +103,7 @@ async function bulkOrdersOptimizedHandler(
                 customerFacingStatus: 'cancelled',
                 'cancellation.cancelledBy': authContext.user.uid,
                 'cancellation.cancelledAt': timestamp,
+                'cancellation.cancelledByRole': 'admin',
                 'cancellation.reason': 'Admin cancelled',
                 updatedAt: timestamp
               });
