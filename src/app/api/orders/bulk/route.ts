@@ -97,6 +97,7 @@ async function bulkOrdersHandler(
                 customerFacingStatus: 'cancelled',
                 'cancellation.cancelledBy': authContext.user.uid,
                 'cancellation.cancelledAt': new Date().toISOString(),
+                'cancellation.cancelledByRole': 'admin',
                 'cancellation.reason': 'Admin cancelled',
                 updatedAt: new Date().toISOString()
               });

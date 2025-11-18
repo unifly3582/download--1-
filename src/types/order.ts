@@ -107,6 +107,13 @@ const CustomerInfoSchema = z.object({
   });
 
 
+const CancellationInfoSchema = z.object({
+  cancelledBy: z.string(),
+  cancelledAt: TimestampSchema,
+  cancelledByRole: z.enum(["admin", "customer"]).optional(),
+  reason: z.string().optional()
+}).optional();
+
 export const OrderSchema = z.object({
   orderId: z.string(),
   orderSource: z.enum(["admin_form", "ai_agent", "customer_app"]),
@@ -133,6 +140,7 @@ export const OrderSchema = z.object({
   pricingInfo: PricingInfoSchema,
   paymentInfo: PaymentInfoSchema,
   approval: ApprovalInfoSchema,
+  cancellation: CancellationInfoSchema,
   shipmentInfo: ShipmentInfoSchema,
   internalStatus: z.enum([
     "payment_pending", "created_pending", "approved", "ready_for_shipping",
@@ -264,6 +272,13 @@ export const CustomerOrderSchema = z.object({
       description: z.string(),
       location: z.string().optional()
     })).optional()
+  }).optional(),
+  
+  // Cancellation information (if cancelled)
+  cancellation: z.object({
+    cancelledAt: z.string().datetime(),
+    cancelledByRole: z.enum(["admin", "customer"]),
+    reason: z.string().optional()
   }).optional(),
   
   // Support information

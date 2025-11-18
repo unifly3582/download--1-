@@ -48,6 +48,13 @@ export function toCustomerView(order: Order): CustomerOrder {
       trackingEvents: createTrackingEvents(order)
     } : undefined,
     
+    // Cancellation information
+    cancellation: order.cancellation ? {
+      cancelledAt: order.cancellation.cancelledAt.toString(),
+      cancelledByRole: order.cancellation.cancelledByRole || 'admin',
+      reason: order.cancellation.reason
+    } : undefined,
+    
     // Support information
     supportInfo: {
       canCancel: ['created_pending', 'approved'].includes(order.internalStatus),
