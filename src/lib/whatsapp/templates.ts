@@ -28,6 +28,8 @@ export interface OrderNotificationData {
 }
 
 // Template 1: Order Placed Confirmation
+// Using bugglysimple template (APPROVED)
+// Template message: "Dear {{1}}, Your order has been successfully received (Order No: {{2}}). We will share your tracking ID as soon as your package is dispatched."
 export const ORDER_PLACED_TEMPLATE: WhatsAppTemplate = {
   name: "bugglysimple",
   language: "en",
@@ -116,37 +118,29 @@ export const ORDER_PICKED_TEMPLATE: WhatsAppTemplate = {
 };
 
 // Template 4: Out for Delivery
+// Template structure: Hi {{1}}! 🚚 Your order {{2}} is out for delivery today! 📦 AWB: {{3}} 📍 Current Location: {{4}}
 export const ORDER_OUT_FOR_DELIVERY_TEMPLATE: WhatsAppTemplate = {
   name: "buggly_out_for_delivery",
   language: "en", 
   components: [
     {
-      type: "header",
-      parameters: [
-        {
-          type: "text",
-          text: "{{1}}" // Customer Name
-        }
-      ]
-    },
-    {
       type: "body",
       parameters: [
         {
           type: "text",
-          text: "{{1}}" // Order ID
+          text: "{{1}}" // Customer Name
         },
         {
           type: "text",
-          text: "{{2}}" // AWB Number
+          text: "{{2}}" // Order ID
         },
         {
           type: "text",
-          text: "{{3}}" // Current Location
+          text: "{{3}}" // AWB Number
         },
         {
           type: "text",
-          text: "{{4}}" // Expected Delivery Time
+          text: "{{4}}" // Current Location
         }
       ]
     }
@@ -177,6 +171,28 @@ export const ORDER_DELIVERED_TEMPLATE: WhatsAppTemplate = {
         {
           type: "text",
           text: "{{2}}" // AWB Number
+        }
+      ]
+    }
+  ]
+};
+
+// Template 6: Order Cancelled
+// Template message: "Dear {{1}}, Your Buggly order (Order ID: {{2}}) has been cancelled. Please contact our customer care team on whatsapp for more information."
+export const ORDER_CANCELLED_TEMPLATE: WhatsAppTemplate = {
+  name: "order_cancelled",
+  language: "en",
+  components: [
+    {
+      type: "body",
+      parameters: [
+        {
+          type: "text",
+          text: "{{1}}" // Customer Name
+        },
+        {
+          type: "text",
+          text: "{{2}}" // Order ID
         }
       ]
     }
@@ -236,9 +252,7 @@ export function buildWhatsAppTemplate(
               break;
               
             case "buggly_out_for_delivery":
-              if (component.type === "header") {
-                // Header has no variables in this template
-              } else if (component.type === "body") {
+              if (component.type === "body") {
                 const bodyParams = [
                   data.customerName,                    // {{1}} Customer Name
                   data.orderId,                        // {{2}} Order ID
@@ -259,6 +273,17 @@ export function buildWhatsAppTemplate(
                 param.text = bodyParams[paramIndex] || param.text;
               }
               break;
+              
+            case "order_cancelled":
+              if (component.type === "body") {
+                const bodyParams = [
+                  data.customerName,                    // {{1}} Customer Name
+                  data.orderId                          // {{2}} Order ID
+                ];
+                const paramIndex = component.parameters!.indexOf(param);
+                param.text = bodyParams[paramIndex] || param.text;
+              }
+              break;
           }
         }
       });
@@ -272,9 +297,7 @@ export function buildWhatsAppTemplate(
 export const TEMPLATE_MESSAGES = {
   ORDER_PLACED: `Dear {{customerName}},
 Your order has been successfully received (Order No: {{orderId}}).
-We will share your tracking ID as soon as your package is dispatched.
-
-[View order button]`,
+We will share your tracking ID as soon as your package is dispatched.`,
 
   ORDER_SHIPPED: `Hi {{customerName}}! 📦
 
@@ -304,5 +327,11 @@ Your order {{orderId}} (AWB: {{awbNumber}}) has been successfully delivered!
 
 Thank you for shopping with us. We hope you love your purchase! 
 
-Rate your experience: [link]`
+Rate your experience: [link]`,
+
+  ORDER_CANCELLED: `Dear {{customerName}},
+
+Your Buggly order (Order ID: {{orderId}}) has been cancelled.
+
+Please contact our customer care team on whatsapp for more information.`
 };

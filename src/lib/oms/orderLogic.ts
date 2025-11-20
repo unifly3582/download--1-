@@ -21,12 +21,19 @@ export async function getOrderWeightAndDimensions(items: OrderItem[]): Promise<O
   const productCache = new Map<string, Product>();
 
   for (const item of items) {
-    // If item already has weight and dimensions (from external source), use them
+    // If item already has weight and dimensions (from external source or Quick Ship), use them
     if (item.weight && item.dimensions && item.dimensions.l > 0 && item.dimensions.b > 0 && item.dimensions.h > 0) {
       totalWeight += item.weight * item.quantity;
       packageDimensions.l = Math.max(packageDimensions.l, item.dimensions.l);
       packageDimensions.b = Math.max(packageDimensions.b, item.dimensions.b);
       packageDimensions.h = Math.max(packageDimensions.h, item.dimensions.h);
+      updatedItems.push(item);
+      continue;
+    }
+
+    // Quick Ship custom items should have all required data, skip product lookup
+    if ((item as any).isQuickShipItem) {
+      logger.info('Quick Ship item detected', { productName: item.productName });
       updatedItems.push(item);
       continue;
     }

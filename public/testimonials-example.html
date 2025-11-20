@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Testimonials - Example</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f9fafb;
+      line-height: 1.6;
+    }
+
+    .testimonials-section {
+      padding: 60px 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+
+    .section-header h2 {
+      font-size: 2.5rem;
+      color: #111827;
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+
+    .section-header p {
+      font-size: 1.25rem;
+      color: #6b7280;
+    }
+
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+    }
+
+    .testimonial-card {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: box-shadow 0.3s ease;
+    }
+
+    .testimonial-card:hover {
+      box-shadow: 0 10px 15px rgba(0, 0, 0, 0.15);
+    }
+
+    .video-container {
+      position: relative;
+      padding-bottom: 56.25%; /* 16:9 aspect ratio */
+      height: 0;
+      background: #000;
+    }
+
+    .video-container iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .testimonial-info {
+      padding: 20px;
+    }
+
+    .customer-name {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 5px;
+    }
+
+    .customer-location {
+      font-size: 0.875rem;
+      color: #6b7280;
+      margin-bottom: 15px;
+    }
+
+    .testimonial-title {
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 8px;
+      font-size: 1rem;
+    }
+
+    .testimonial-description {
+      font-size: 0.875rem;
+      color: #4b5563;
+      line-height: 1.6;
+    }
+
+    .loading, .error, .no-testimonials {
+      text-align: center;
+      padding: 60px 20px;
+      font-size: 1.125rem;
+    }
+
+    .loading {
+      color: #6b7280;
+    }
+
+    .error {
+      color: #dc2626;
+    }
+
+    .no-testimonials {
+      color: #9ca3af;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .section-header h2 {
+        font-size: 2rem;
+      }
+      
+      .section-header p {
+        font-size: 1rem;
+      }
+      
+      .testimonials-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .testimonials-section {
+        padding: 40px 15px;
+      }
+    }
+
+    @media (min-width: 769px) and (max-width: 1023px) {
+      .testimonials-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <section class="testimonials-section">
+    <div class="section-header">
+      <h2>हमारे ग्राहक क्या कहते हैं</h2>
+      <p>What Our Customers Say</p>
+    </div>
+    
+    <div id="testimonials-container">
+      <div class="loading">Loading testimonials...</div>
+    </div>
+  </section>
+
+  <script>
+    // Configuration
+    const API_ENDPOINT = '/api/customer/testimonials';
+    const TESTIMONIALS_LIMIT = 6;
+
+    // Fetch testimonials from API
+    async function loadTestimonials() {
+      try {
+        const response = await fetch(`${API_ENDPOINT}?limit=${TESTIMONIALS_LIMIT}`);
+        const data = await response.json();
+        
+        const container = document.getElementById('testimonials-container');
+        
+        // Check if request was successful
+        if (!data.success) {
+          container.innerHTML = '<div class="error">Failed to load testimonials</div>';
+          return;
+        }
+
+        // Check if we have testimonials
+        if (!data.data || data.data.length === 0) {
+          container.innerHTML = '<div class="no-testimonials">No testimonials available yet</div>';
+          return;
+        }
+
+        // Create grid
+        const grid = document.createElement('div');
+        grid.className = 'testimonials-grid';
+
+        // Add each testimonial
+        data.data.forEach(testimonial => {
+          const card = createTestimonialCard(testimonial);
+          grid.appendChild(card);
+        });
+
+        // Replace loading with grid
+        container.innerHTML = '';
+        container.appendChild(grid);
+
+      } catch (error) {
+        console.error('Error loading testimonials:', error);
+        document.getElementById('testimonials-container').innerHTML = 
+          '<div class="error">Failed to load testimonials. Please try again later.</div>';
+      }
+    }
+
+    // Create a testimonial card element
+    function createTestimonialCard(testimonial) {
+      const card = document.createElement('div');
+      card.className = 'testimonial-card';
+      
+      // Escape HTML to prevent XSS
+      const escapeHtml = (text) => {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      };
+
+      const customerName = escapeHtml(testimonial.customerName);
+      const customerLocation = escapeHtml(testimonial.customerLocation);
+      const title = testimonial.title ? escapeHtml(testimonial.title) : '';
+      const description = testimonial.description ? escapeHtml(testimonial.description) : '';
+      const videoTitle = title || `Testimonial from ${customerName}`;
+      
+      card.innerHTML = `
+        <div class="video-container">
+          <iframe 
+            src="${testimonial.embedUrl}" 
+            title="${escapeHtml(videoTitle)}"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+            loading="lazy"
+          ></iframe>
+        </div>
+        <div class="testimonial-info">
+          <div class="customer-name">${customerName}</div>
+          <div class="customer-location">📍 ${customerLocation}</div>
+          ${title ? `<div class="testimonial-title">${title}</div>` : ''}
+          ${description ? `<div class="testimonial-description">${description}</div>` : ''}
+        </div>
+      `;
+      
+      return card;
+    }
+
+    // Load testimonials when page loads
+    document.addEventListener('DOMContentLoaded', loadTestimonials);
+  </script>
+</body>
+</html>

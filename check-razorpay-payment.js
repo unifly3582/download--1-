@@ -1,0 +1,59 @@
+const admin = require('firebase-admin');
+
+const serviceAccount = {
+  projectId: "buggly-adminpanel",
+  clientEmail: "firebase-adminsdk-fbsvc@buggly-adminpanel.iam.gserviceaccount.com",
+  privateKey: "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCvkOIe6riSJWrA\njuYjY0IZboaoyBJlocpJdsltL8qNSm1YxFJIzRejSPL68KFkr5HijsJA5edd3oP8\nd8dl8XFnMsc9QDp2gCcaUiBk59v6Snz6MK8cZdpsBEM2rCd5S30MJN14XsYBVkM9\n1bwgR6bioFNwBeSuVeWCZSPwrktEaRA41RE0og2aVxqQfPujq0Csr0kLZLCs9fq0\nMcZ7xS/OUEcuxPrAWuufNDOzJmQc1N3/VSutHRWoma4hgAsw+YjPrv4/F02WxW+4\nRxRyZ2cLIWOU7hCHQDdNyDhki8f+bJxLQdEkgL8wDoNye1eW1bmgJ8ovSbAYqzqW\nT6LpObLjAgMBAAECggEABO1nYJVsh12EI3y0j3sHreMLkHfHsbvatjkelMaUmWaP\nWcBuIXDwIDsPPA++LS89mZgxciosViwalDQLD/IOIWasGiylTLzIBtXAkanC42wX\nxIXSmaoaI+dIDk7CmjA42uW7TteKGHDYA5zuDLyLaII2FUd1EEIvkNCkiOq7Xg4b\nj+xjiZw2OAJfm7Y1sCy7AsrXnoa7ZOhZQuZ2yZuUI0uDPyI/k5kIEYvabDHFrkIR\n+iscG38LwVu7TTDOf8mufahYL/LriH0RPxd38w2WNHp2falXCoWeRvE2rK9w1X6r\nj69fuouLlnf5ZUrxo/iT2xJjWpEmQVfrxWP5MWyWsQKBgQDgMYT/4ivc2OiIGolR\nU3OqncU/uUWIHEaJYFrNcM1OF9gsRMqDprL+Rj2VqS/u3wqXG/8D5AJcZluH13J8\nLkkEibRVoPOf6R2n1ESr/mnjXwfuUmXAiakNnBFI/0Uq5RbyTJjff4yKhnOwltYR\noqQNyFuukRjTDGxfoTKS0hENFwKBgQDIeUMnCNLQ4CekopuZ1iTFWnalA0vkmi93\nL1Hd2KBrMdUAqHK2H8m/heIdnV/htJes0/fYXj0Q+q6zkZOt6zBud7CLEg/k4FOR\nH8H2KM3syoiTNn5hFSjSBmhODXupfrow82UysxDbxTk6+XnPzRmp2bY+X31Maq2s\neV70D01gFQKBgQDbF8mv/yl6ZAeqqrQzY+iPfit7gOWwhGFyc1WJm4knninF6Vw3\nmDsoPyCEF5keSZ4h2lw3QyYDgoxEjon1TY5R/vjbDbXIOpqentSVeMWmTAKGJsQF\niwJIqJJD0iOYLdVk6PIkyJNh9M8ubdm51kWYqoreaDHoXiWytuejj+LV9QKBgCmY\nb4SD4ioQuGkCjEKJGiwQrxlh67dM/pg+K0BamD5loop2aQa85cFlaBs48hIExIvJ\nl10/gHArc2Ayzm+BoxTopKrWXpHgsbYk3rvSj5eYFmplHifKmiOpzK6VQZlTgBJ0\nDgVM/ix7aXqBFPM23SJO1+9tJLRcVhi5PihpnGZZAoGBAM9JLBVXvKpkd+GJublZ\nYEpUrgPpFRTMvWqTmEjp3DUOU19aW1nO2+U45z9PsjqRSG9O+EkFIhMMo2t90gT+\nsnmZhxWDP0POQL/Wlh/4ru+H3PjXEqtg/vjyJ29DKuKWsexf9GlG086JAG54aLPC\nomWfQhgsmRrhGc2QOoUL3wcv\n-----END PRIVATE KEY-----\n"
+};
+
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+  });
+}
+
+async function checkPaymentStatus() {
+  console.log('\n🔍 RAZORPAY PAYMENT INVESTIGATION\n');
+  console.log('Order ID: 5071');
+  console.log('Razorpay Order ID: order_Rh7pq0P4WpBtgC\n');
+  
+  console.log('📋 ISSUE SUMMARY:');
+  console.log('- Order exists in database with status: payment_pending');
+  console.log('- Admin panel "To Approve" tab only shows: created_pending, needs_manual_verification');
+  console.log('- Therefore, order is NOT visible in admin panel\n');
+  
+  console.log('💡 WHAT THIS MEANS:');
+  console.log('1. Order was created successfully');
+  console.log('2. Customer may have completed payment on Razorpay');
+  console.log('3. Webhook did NOT receive payment confirmation');
+  console.log('4. Order stuck in "payment_pending" status\n');
+  
+  console.log('🔧 POSSIBLE CAUSES:');
+  console.log('1. Webhook URL not configured in Razorpay Dashboard');
+  console.log('2. Webhook URL not accessible (localhost/firewall)');
+  console.log('3. Payment not actually completed');
+  console.log('4. Webhook signature verification failed\n');
+  
+  console.log('✅ SOLUTIONS:\n');
+  console.log('OPTION 1: Check Razorpay Dashboard');
+  console.log('- Go to: https://dashboard.razorpay.com/');
+  console.log('- Check if payment was actually completed');
+  console.log('- Check webhook logs for delivery status\n');
+  
+  console.log('OPTION 2: Configure Webhook (if not done)');
+  console.log('- Webhook URL: https://admin.jarakitchen.com/api/webhooks/razorpay');
+  console.log('- Event: order.paid');
+  console.log('- Secret: (from your .env.local RAZORPAY_WEBHOOK_SECRET)\n');
+  
+  console.log('OPTION 3: Manual Fix (if payment was completed)');
+  console.log('- I can create a script to manually update the order status');
+  console.log('- This should only be done if payment is confirmed in Razorpay\n');
+  
+  console.log('OPTION 4: Add "Payment Pending" Tab');
+  console.log('- Add a new tab in admin panel to show payment_pending orders');
+  console.log('- This helps track incomplete payments\n');
+  
+  process.exit(0);
+}
+
+checkPaymentStatus();

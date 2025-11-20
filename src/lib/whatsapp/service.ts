@@ -7,7 +7,8 @@ import {
   ORDER_SHIPPED_TEMPLATE,
   ORDER_PICKED_TEMPLATE,
   ORDER_OUT_FOR_DELIVERY_TEMPLATE,
-  ORDER_DELIVERED_TEMPLATE
+  ORDER_DELIVERED_TEMPLATE,
+  ORDER_CANCELLED_TEMPLATE
 } from './templates';
 import { logger } from '@/lib/logger';
 
@@ -152,6 +153,17 @@ export class WhatsAppService {
     data: OrderNotificationData
   ): Promise<SendMessageResponse> {
     const template = buildWhatsAppTemplate(ORDER_DELIVERED_TEMPLATE, data);
+    return this.sendTemplateMessage(phoneNumber, template);
+  }
+
+  /**
+   * Send order cancelled notification
+   */
+  async sendOrderCancelledNotification(
+    phoneNumber: string,
+    data: OrderNotificationData
+  ): Promise<SendMessageResponse> {
+    const template = buildWhatsAppTemplate(ORDER_CANCELLED_TEMPLATE, data);
     return this.sendTemplateMessage(phoneNumber, template);
   }
 

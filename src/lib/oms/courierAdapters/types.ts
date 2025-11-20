@@ -5,15 +5,21 @@ export type AdapterSuccessResponse = {
   success: true;
   awb: string;
   trackingUrl: string;
-  apiRequest?: any;   // The request payload sent to the courier API
-  apiResponse?: any;  // The full response received from the courier API
+  metadata?: {
+    pickupLocation?: string;
+    uploadWbn?: string;
+    shippedAt?: string;
+    [key: string]: any;
+  };
+  apiRequest?: any;   // The request payload sent to the courier API (for logging only)
+  apiResponse?: any;  // The full response received from the courier API (for logging only)
 };
 
 export type AdapterErrorResponse = {
   success: false;
   error: string;
-  apiRequest?: any;   // The request payload sent to the courier API
-  apiResponse?: any;  // The full response received from the courier API (even in case of error)
+  apiRequest?: any;   // The request payload sent to the courier API (for debugging)
+  apiResponse?: any;  // The full response received from the courier API (for debugging)
 };
 
 export type AdapterResponse = AdapterSuccessResponse | AdapterErrorResponse;

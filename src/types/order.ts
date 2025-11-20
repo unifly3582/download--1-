@@ -22,6 +22,8 @@ export const OrderItemSchema = z.object({
     b: z.number(),
     h: z.number(),
   }).optional(),
+  totalPrice: z.number().optional(), // Legacy field from old orders
+  isQuickShipItem: z.boolean().optional(), // Flag for quick ship custom items
 });
 
 export const PricingInfoSchema = z.object({
@@ -71,6 +73,42 @@ export const ApprovalInfoSchema = z.object({
   }).optional()
 });
 
+// Action log entry schema for tracking all order-related actions
+export const ActionLogEntrySchema = z.object({
+  actionId: z.string(),
+  timestamp: z.string().datetime(),
+  actionBy: z.string(), // Admin user who took the action
+  actionType: z.enum([
+    "call_placed",
+    "call_attempted",
+    "whatsapp_sent",
+    "email_sent",
+    "sms_sent",
+    "ticket_raised",
+    "address_verified",
+    "address_updated",
+    "payment_verified",
+    "payment_issue",
+    "refund_initiated",
+    "courier_contacted",
+    "shipment_delayed",
+    "delivery_rescheduled",
+    "customer_complaint",
+    "quality_issue",
+    "return_requested",
+    "replacement_sent",
+    "follow_up",
+    "internal_note",
+    "other"
+  ]),
+  actionDetails: z.string(), // What exactly was done
+  customerResponse: z.string().optional(), // What the customer said/did
+  outcome: z.enum(["resolved", "pending", "escalated", "no_response"]),
+  nextAction: z.string().optional(), // What needs to be done next
+  nextActionBy: z.string().datetime().optional(), // When to follow up
+  notes: z.string().optional() // Additional notes
+});
+
 export const ShipmentInfoSchema = z.object({
   courierPartner: z.string().optional(),
   awb: z.string().optional(),
@@ -82,21 +120,23 @@ export const ShipmentInfoSchema = z.object({
   lastTrackedAt: z.string().datetime().optional(),
   trackingLocation: z.string().optional(),
   trackingInstructions: z.string().optional(),
+  trackingDisabledReason: z.string().optional(),
+  shippedAt: z.string().datetime().optional(),
   
-  // Action log for pending orders
-  actionLog: z.array(z.object({
-    actionId: z.string(),
-    timestamp: z.string().datetime(),
-    actionBy: z.string(),
-    action: z.string(),
-    result: z.enum(["success", "failed", "pending"]),
-    nextAction: z.string().optional(),
-    notes: z.string().optional()
-  })).optional(),
+  // Essential metadata (optimized storage)
+  pickupLocation: z.string().optional(),
+  uploadWbn: z.string().optional(),  // Delhivery upload batch ID
   
+  // Action log for all orders - tracks all customer interactions and internal actions
+  actionLog: z.array(ActionLogEntrySchema).optional(),
+  
+  // Legacy fields (kept for backward compatibility with old orders)
   apiRequest: z.any().optional(),
   apiResponse: z.any().optional(),
+  
+  // Error tracking
   error: z.string().optional(),
+  errorDetails: z.string().optional(),
 });
 
 const CustomerInfoSchema = z.object({
@@ -116,7 +156,7 @@ const CancellationInfoSchema = z.object({
 
 export const OrderSchema = z.object({
   orderId: z.string(),
-  orderSource: z.enum(["admin_form", "ai_agent", "customer_app"]),
+  orderSource: z.enum(["admin_form", "ai_agent", "customer_app", "admin_quick_ship"]),
   
   // Traffic Source Tracking
   trafficSource: TrafficSourceSchema.optional(),
@@ -176,6 +216,12 @@ export const OrderSchema = z.object({
     }).optional()
   }).optional(),
   
+  // Notification history for tracking
+  notificationHistory: z.object({
+    lastNotifiedStatus: z.string().optional(),
+    lastNotifiedAt: z.string().datetime().optional()
+  }).optional(),
+  
   weight: z.number().nullable().optional(),
   dimensions: z.object({
     l: z.number(),
@@ -189,7 +235,7 @@ export const OrderSchema = z.object({
 
 // Schema for creating an order, now with an option for admin-provided pricing.
 export const CreateOrderSchema = z.object({
-  orderSource: z.enum(["admin_form", "ai_agent", "customer_app"]),
+  orderSource: z.enum(["admin_form", "ai_agent", "customer_app", "admin_quick_ship"]),
   
   // Traffic Source Tracking
   trafficSource: TrafficSourceSchema.optional(),
@@ -215,6 +261,7 @@ export const CreateOrderSchema = z.object({
 export type Order = z.infer<typeof OrderSchema>;
 export type CreateOrder = z.infer<typeof CreateOrderSchema>;
 export type OrderItem = z.infer<typeof OrderItemSchema>;
+export type ActionLogEntry = z.infer<typeof ActionLogEntrySchema>;
 
 // Customer-facing order schema
 export const CustomerOrderSchema = z.object({

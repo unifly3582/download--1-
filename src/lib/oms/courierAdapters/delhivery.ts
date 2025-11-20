@@ -98,10 +98,21 @@ export async function createDelhiveryShipment(
 
     console.log("[OMS][DELHIVERY][SUCCESS]", apiResponse);
 
+    // Extract only essential data (optimized storage)
+    const awb = apiResponse.packages[0].waybill;
+    const uploadWbn = apiResponse.upload_wbn;
+    
     return {
       success: true,
-      awb: apiResponse.packages[0].waybill,
-      trackingUrl: `https://www.delhivery.com/track/package/${apiResponse.packages[0].waybill}`,
+      awb,
+      trackingUrl: `https://www.delhivery.com/track/package/${awb}`,
+      // Essential metadata only (not full API request/response)
+      metadata: {
+        pickupLocation: pickupLocationName,
+        uploadWbn,
+        shippedAt: new Date().toISOString(),
+      },
+      // Keep for error logging only
       apiRequest,
       apiResponse,
     };
@@ -113,6 +124,7 @@ export async function createDelhiveryShipment(
     return {
       success: false,
       error: errorMessage,
+      // Keep for error debugging only
       apiRequest,
       apiResponse: error.response?.data || null,
     };

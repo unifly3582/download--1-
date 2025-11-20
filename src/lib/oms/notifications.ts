@@ -10,7 +10,7 @@ export interface NotificationLog {
   orderId: string;
   customerId: string;
   customerPhone: string;
-  notificationType: 'order_placed' | 'order_shipped' | 'order_picked' | 'out_for_delivery' | 'order_delivered';
+  notificationType: 'order_placed' | 'order_shipped' | 'order_picked' | 'out_for_delivery' | 'order_delivered' | 'order_cancelled';
   channel: 'whatsapp' | 'sms' | 'email';
   status: 'sent' | 'failed' | 'pending';
   messageId?: string;
@@ -258,6 +258,47 @@ export class OrderNotificationService {
 
     } catch (error: any) {
       logger.error('Failed to send order delivered notification', error, { orderId: order.orderId });
+    }
+  }
+
+  /**
+   * Send order cancelled notification
+   */
+  async sendOrderCancelledNotification(order: Order): Promise<void> {
+    if (!this.shouldSendNotification(order, 'whatsapp')) return;
+
+    const notificationData = this.buildNotificationData(order);
+    const phoneNumber = formatPhoneForWhatsApp(order.customerInfo.phone);
+
+    try {
+      if (!this.whatsappService) {
+        throw new Error('WhatsApp service not configured');
+      }
+
+      const result = await this.whatsappService.sendOrderCancelledNotification(
+        phoneNumber,
+        notificationData
+      );
+
+      await this.logNotification({
+        orderId: order.orderId,
+        customerId: order.customerInfo.customerId,
+        customerPhone: order.customerInfo.phone,
+        notificationType: 'order_cancelled' as any,
+        channel: 'whatsapp',
+        status: result.success ? 'sent' : 'failed',
+        messageId: result.messageId,
+        error: result.error,
+        sentAt: new Date().toISOString(),
+        retryCount: 0
+      });
+
+      await this.updateOrderNotificationTimestamp(order.orderId);
+
+      logger.info(`Order cancelled notification ${result.success ? 'sent' : 'failed'}`, { orderId: order.orderId });
+
+    } catch (error: any) {
+      logger.error('Failed to send order cancelled notification', error, { orderId: order.orderId });
     }
   }
 

@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase/server';
 import { UpdateTestimonialSchema } from '@/types/testimonial';
 
+// Disable caching for this route
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 /**
  * GET /api/admin/testimonials/[testimonialId]
  * Fetch a single testimonial (admin only)
