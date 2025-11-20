@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase/server';
 import { CreateTestimonialSchema } from '@/types/testimonial';
 
+// Disable caching for this route
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 /**
  * GET /api/admin/testimonials
  * Fetch all testimonials (admin only)
@@ -52,6 +56,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: testimonials,
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+      },
     });
     
   } catch (error: any) {

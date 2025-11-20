@@ -96,7 +96,22 @@ export async function POST(
     
     console.log(`[CUSTOMER_CANCEL] Order ${orderId} cancelled by customer ${orderData.customerInfo.customerId}`);
     
-    // TODO: Send cancellation notification when notification service supports it
+    // Send WhatsApp cancellation notification
+    try {
+      const { createNotificationService } = await import('@/lib/oms/notifications');
+      const notificationService = createNotificationService();
+      const updatedOrder = { 
+        ...orderData, 
+        internalStatus: 'cancelled',
+        customerFacingStatus: 'cancelled',
+        updatedAt: new Date().toISOString() 
+      } as any;
+      await notificationService.sendOrderCancelledNotification(updatedOrder);
+      console.log(`[CUSTOMER_CANCEL] WhatsApp notification sent for ${orderId}`);
+    } catch (notificationError) {
+      console.error(`[CUSTOMER_CANCEL] Notification failed for ${orderId}:`, notificationError);
+      // Don't fail cancellation if notification fails
+    }
     
     return NextResponse.json({
       success: true,

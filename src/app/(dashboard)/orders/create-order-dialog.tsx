@@ -39,7 +39,8 @@ interface CreateOrderDialogProps {
 type AdminPricingInfo = z.infer<typeof PricingInfoSchema>;
 
 interface DialogFormData {
-  orderSource: 'admin_form';
+  orderSource: 'admin_form' | 'admin_quick_ship';
+  isQuickShipMode: boolean;
   customerInfo: { customerId?: string; name: string; phone: string; email?: string; };
   shippingAddress: { street: string; city: string; state: string; zip: string; country: string; };
   items: OrderItemWithMeta[];
@@ -56,6 +57,7 @@ interface DialogFormData {
 
 const initialFormData: DialogFormData = {
   orderSource: 'admin_form',
+  isQuickShipMode: false,
   customerInfo: { name: '', phone: '' },
   shippingAddress: { street: '', city: '', state: '', zip: '', country: 'India' },
   items: [],
@@ -77,6 +79,7 @@ export function CreateOrderDialog({ isOpen, onOpenChange, onOrderCreated }: Crea
   const [productSearch, setProductSearch] = useState('');
   const [foundProducts, setFoundProducts] = useState<SearchableVariation[]>([]);
   const [isPincodeLoading, setIsPincodeLoading] = useState(false);
+  const [dimensionUnit, setDimensionUnit] = useState<'cm' | 'inch'>('cm');
   const { toast } = useToast();
 
   // ... (useEffect hooks remain the same) ...
@@ -117,6 +120,7 @@ export function CreateOrderDialog({ isOpen, onOpenChange, onOrderCreated }: Crea
       setStep(1);
       setIsNewCustomer(false);
       setIsEditingAddress(false);
+      setDimensionUnit('cm');
     }
   }, [isOpen]);
 
@@ -321,7 +325,7 @@ export function CreateOrderDialog({ isOpen, onOpenChange, onOrderCreated }: Crea
     }
 
     const payload: CreateOrder = {
-      orderSource: 'admin_form',
+      orderSource: formData.orderSource,
       customerInfo,
       shippingAddress: formData.shippingAddress,
       items: formData.items.map(({ stock, ...item }) => item),
@@ -331,6 +335,8 @@ export function CreateOrderDialog({ isOpen, onOpenChange, onOrderCreated }: Crea
       ...(formData.trafficSource && { trafficSource: formData.trafficSource }),
     };
 
+    console.log('[CreateOrder] Submitting payload:', JSON.stringify(payload, null, 2));
+
     setIsSaving(true);
     try {
       const result = await authenticatedFetch('/api/orders', {
@@ -339,14 +345,26 @@ export function CreateOrderDialog({ isOpen, onOpenChange, onOrderCreated }: Crea
       });
 
       toast({ title: 'Success!', description: `Order ${result.orderId} created.` });
+      
+      // Reset form state
+      setFormData(initialFormData);
+      setInternalItems([]);
+      setStep(1);
+      setPhoneNumber('');
+      setFoundCustomer(null);
+      setIsNewCustomer(false);
+      setProductSearch('');
+      setFoundProducts([]);
+      
       onOrderCreated();
       onOpenChange(false);
     } catch (error: any) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      console.error('[CreateOrder] Error:', error);
+      toast({ title: 'Error', description: error.message || 'Failed to create order', variant: 'destructive' });
     } finally {
       setIsSaving(false);
     }
-  }, [formData, onOrderCreated, onOpenChange, toast]);
+  }, [formData, phoneNumber, onOrderCreated, onOpenChange, toast]);
 
   // ... (the rest of the component's JSX remains exactly the same) ...
   const nextStep = () => setStep(s => s + 1);
@@ -365,6 +383,28 @@ export function CreateOrderDialog({ isOpen, onOpenChange, onOrderCreated }: Crea
           <DialogTitle>Create New Order</DialogTitle>
           <DialogDescription>Step {step} of 3</DialogDescription>
         </DialogHeader>
+
+        {/* Quick Ship Mode Toggle */}
+        <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+          <input
+            type="checkbox"
+            id="quickShipMode"
+            checked={formData.isQuickShipMode}
+            onChange={(e) => {
+              const isQuickShip = e.target.checked;
+              setFormData(p => ({
+                ...p,
+                isQuickShipMode: isQuickShip,
+                orderSource: isQuickShip ? 'admin_quick_ship' : 'admin_form',
+                items: [] // Clear items when switching modes
+              }));
+            }}
+            className="w-4 h-4"
+          />
+          <label htmlFor="quickShipMode" className="text-sm font-medium cursor-pointer">
+            Quick Ship Mode (Skip product catalog, enter custom details)
+          </label>
+        </div>
 
         {step === 1 && (
           <div className="py-4 space-y-4">
@@ -479,17 +519,185 @@ export function CreateOrderDialog({ isOpen, onOpenChange, onOrderCreated }: Crea
         {step === 2 && (
           <div className='py-4 space-y-4'>
             <h4 className='font-semibold'>Order Items</h4>
-            <div className='flex gap-2'>
-              <Input placeholder='Search by product name, variation, or SKU...' value={productSearch} onChange={e => setProductSearch(e.target.value)} />
-            </div>
-            {foundProducts.length > 0 && (
-              <div className="border rounded-md max-h-48 overflow-y-auto">
-                {foundProducts.map(p => (
-                  <button key={p.sku} onClick={() => addProductToOrder(p)} className="block w-full text-left p-2 hover:bg-slate-100">
-                    <p className="font-semibold">{p.variationName}</p>
-                    <p className="text-sm text-muted-foreground">SKU: {p.sku} | Price: {p.price} | Stock: {p.stock}</p>
-                  </button>
-                ))}
+            
+            {!formData.isQuickShipMode ? (
+              <>
+                <div className='flex gap-2'>
+                  <Input placeholder='Search by product name, variation, or SKU...' value={productSearch} onChange={e => setProductSearch(e.target.value)} />
+                </div>
+                {foundProducts.length > 0 && (
+                  <div className="border rounded-md max-h-48 overflow-y-auto">
+                    {foundProducts.map(p => (
+                      <button key={p.sku} onClick={() => addProductToOrder(p)} className="block w-full text-left p-2 hover:bg-slate-100">
+                        <p className="font-semibold">{p.variationName}</p>
+                        <p className="text-sm text-muted-foreground">SKU: {p.sku} | Price: {p.price} | Stock: {p.stock}</p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-md space-y-3">
+                <p className="text-sm font-medium text-amber-800">Quick Ship - Custom Product Entry</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="col-span-2">
+                    <Label>Product Name *</Label>
+                    <Input 
+                      placeholder="e.g., Custom Fertilizer Bag" 
+                      id="quickShipProductName"
+                    />
+                  </div>
+                  <div>
+                    <Label>Quantity *</Label>
+                    <Input 
+                      type="number" 
+                      min="1" 
+                      defaultValue="1"
+                      id="quickShipQuantity"
+                    />
+                  </div>
+                  <div>
+                    <Label>Unit Price (₹) *</Label>
+                    <Input 
+                      type="number" 
+                      min="0" 
+                      placeholder="500"
+                      id="quickShipPrice"
+                    />
+                  </div>
+                  <div>
+                    <Label>Weight (grams) *</Label>
+                    <Input 
+                      type="number" 
+                      min="0" 
+                      step="1"
+                      placeholder="25000"
+                      id="quickShipWeight"
+                    />
+                  </div>
+                  <div>
+                    <Label>HSN Code</Label>
+                    <Input 
+                      placeholder="310100"
+                      id="quickShipHsn"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <div className="flex items-center justify-between mb-2">
+                      <Label>Dimensions *</Label>
+                      <div className="flex items-center gap-2 text-sm">
+                        <button
+                          type="button"
+                          onClick={() => setDimensionUnit('cm')}
+                          className={`px-2 py-1 rounded ${dimensionUnit === 'cm' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+                        >
+                          cm
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDimensionUnit('inch')}
+                          className={`px-2 py-1 rounded ${dimensionUnit === 'inch' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+                        >
+                          inch
+                        </button>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <Input 
+                        type="number" 
+                        min="0" 
+                        step="0.1"
+                        placeholder={dimensionUnit === 'cm' ? 'Length' : 'Length (in)'}
+                        id="quickShipLength"
+                      />
+                      <Input 
+                        type="number" 
+                        min="0" 
+                        step="0.1"
+                        placeholder={dimensionUnit === 'cm' ? 'Breadth' : 'Breadth (in)'}
+                        id="quickShipBreadth"
+                      />
+                      <Input 
+                        type="number" 
+                        min="0" 
+                        step="0.1"
+                        placeholder={dimensionUnit === 'cm' ? 'Height' : 'Height (in)'}
+                        id="quickShipHeight"
+                      />
+                    </div>
+                    {dimensionUnit === 'inch' && (
+                      <p className="text-xs text-blue-600 mt-1">
+                        Values will be automatically converted to cm (1 inch = 2.54 cm)
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <Button 
+                  onClick={() => {
+                    const productName = (document.getElementById('quickShipProductName') as HTMLInputElement)?.value?.trim();
+                    const quantity = parseInt((document.getElementById('quickShipQuantity') as HTMLInputElement)?.value || '1');
+                    const price = parseFloat((document.getElementById('quickShipPrice') as HTMLInputElement)?.value || '0');
+                    const weight = parseFloat((document.getElementById('quickShipWeight') as HTMLInputElement)?.value || '0');
+                    const hsn = (document.getElementById('quickShipHsn') as HTMLInputElement)?.value?.trim() || '000000';
+                    
+                    // Get dimension values
+                    let length = parseFloat((document.getElementById('quickShipLength') as HTMLInputElement)?.value || '0');
+                    let breadth = parseFloat((document.getElementById('quickShipBreadth') as HTMLInputElement)?.value || '0');
+                    let height = parseFloat((document.getElementById('quickShipHeight') as HTMLInputElement)?.value || '0');
+                    
+                    // Convert inches to cm if needed (1 inch = 2.54 cm)
+                    if (dimensionUnit === 'inch') {
+                      length = Math.round(length * 2.54 * 10) / 10; // Round to 1 decimal
+                      breadth = Math.round(breadth * 2.54 * 10) / 10;
+                      height = Math.round(height * 2.54 * 10) / 10;
+                    }
+
+                    // Validation
+                    if (!productName || productName.length < 2) {
+                      toast({ title: 'Validation Error', description: 'Product name is required (min 2 characters)', variant: 'destructive' });
+                      return;
+                    }
+                    if (price <= 0) {
+                      toast({ title: 'Validation Error', description: 'Price must be greater than 0', variant: 'destructive' });
+                      return;
+                    }
+                    if (weight <= 0) {
+                      toast({ title: 'Validation Error', description: 'Weight must be greater than 0', variant: 'destructive' });
+                      return;
+                    }
+                    if (length <= 0 || breadth <= 0 || height <= 0) {
+                      toast({ title: 'Validation Error', description: 'All dimensions must be greater than 0', variant: 'destructive' });
+                      return;
+                    }
+                    if (quantity < 1) {
+                      toast({ title: 'Validation Error', description: 'Quantity must be at least 1', variant: 'destructive' });
+                      return;
+                    }
+
+                    const customItem: OrderItemWithMeta = {
+                      productId: 'CUSTOM_PRODUCT',
+                      variationId: null,
+                      productName,
+                      quantity,
+                      unitPrice: price,
+                      sku: `CUSTOM-${Date.now()}`,
+                      hsnCode: hsn,
+                      weight,
+                      dimensions: { l: length, b: breadth, h: height },
+                      isQuickShipItem: true,
+                      stock: 999
+                    };
+
+                    setInternalItems([customItem]);
+                    const dimensionText = dimensionUnit === 'inch' 
+                      ? `Dimensions converted to ${length}×${breadth}×${height} cm`
+                      : 'Custom product added';
+                    toast({ title: 'Success', description: dimensionText });
+                  }}
+                  className="w-full"
+                >
+                  Add Custom Product
+                </Button>
               </div>
             )}
             <div className='border rounded-md mt-4'>

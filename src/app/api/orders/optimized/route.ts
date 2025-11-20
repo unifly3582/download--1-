@@ -35,6 +35,10 @@ async function getOptimizedOrdersHandler(request: NextRequest, context: any, aut
       case 'issues':
         query = query.where('internalStatus', 'in', ['cancelled', 'returned']);
         break;
+      case 'payment-failed':
+        // Show both Failed and Pending payments (abandoned checkouts)
+        query = query.where('internalStatus', '==', 'payment_pending');
+        break;
     }
 
     // Add pagination
@@ -96,6 +100,10 @@ async function getOptimizedOrdersHandler(request: NextRequest, context: any, aut
                 break;
               case 'issues':
                 includeDoc = ['cancelled', 'returned'].includes(data.internalStatus);
+                break;
+              case 'payment-failed':
+                // Show both Failed and Pending payments (abandoned checkouts)
+                includeDoc = data.internalStatus === 'payment_pending';
                 break;
               default:
                 includeDoc = true;

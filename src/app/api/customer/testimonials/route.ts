@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase/server';
 
+// Disable caching for this route
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 /**
  * GET /api/customer/testimonials
  * Fetch active testimonials for customer-facing website (public endpoint)
@@ -9,6 +13,8 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl;
     const limit = parseInt(searchParams.get('limit') || '10', 10);
+    
+    console.log('[TESTIMONIALS_API] Fetching testimonials from Firestore...');
     
     // Try with composite index first, fallback to simple query if index not ready
     let snapshot;
@@ -20,17 +26,21 @@ export async function GET(request: NextRequest) {
         .orderBy('createdAt', 'desc')
         .limit(Math.min(limit, 50))
         .get();
+      console.log('[TESTIMONIALS_API] Query successful with index');
     } catch (indexError: any) {
       // If index not ready, fetch all active and sort in memory
-      console.warn('Composite index not ready, using fallback query');
+      console.warn('[TESTIMONIALS_API] Composite index not ready, using fallback query');
       snapshot = await db
         .collection('testimonials')
         .where('isActive', '==', true)
         .get();
     }
     
+    console.log('[TESTIMONIALS_API] Found', snapshot.size, 'documents');
+    
     let testimonials = snapshot.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
       const data = doc.data();
+      console.log('[TESTIMONIALS_API] Document:', doc.id, '-', data.customerName);
       return {
         id: doc.id,
         youtubeVideoId: data.youtubeVideoId,
@@ -62,6 +72,12 @@ export async function GET(request: NextRequest) {
       success: true,
       data: testimonials,
       count: testimonials.length,
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
     });
     
   } catch (error: any) {

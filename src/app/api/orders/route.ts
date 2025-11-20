@@ -221,7 +221,7 @@ async function createOrderHandler(request: NextRequest, context: any, authContex
     let pricingInfo;
     let couponDetails = null;
     
-    if (orderInput.orderSource === 'admin_form' && orderInput.manualPricingInfo) {
+    if ((orderInput.orderSource === 'admin_form' || orderInput.orderSource === 'admin_quick_ship') && orderInput.manualPricingInfo) {
         pricingInfo = orderInput.manualPricingInfo;
     } else {
         const pricingResult = await calculatePricingInfo(
@@ -238,9 +238,18 @@ async function createOrderHandler(request: NextRequest, context: any, authContex
     let paymentStatus: Order['paymentInfo']['status'] = "Pending";
     let approvalStatus: Order['approval']['status'] = "pending";
 
+    // Quick Ship orders are auto-approved
+    if (orderInput.orderSource === 'admin_quick_ship') {
+        internalStatus = "approved";
+        approvalStatus = "approved";
+        // For COD quick ship, payment is still pending until delivery
+        if (orderInput.paymentInfo.method === 'Prepaid') {
+            paymentStatus = "Completed";
+        }
+    }
     // Simplified logic: If the order is prepaid and doesn't need manual verification,
     // the authenticated user (admin or machine) can fast-track its approval.
-    if (orderInput.paymentInfo.method === 'Prepaid' && !needsManualVerification) {
+    else if (orderInput.paymentInfo.method === 'Prepaid' && !needsManualVerification) {
         internalStatus = "approved";
         paymentStatus = "Completed";
         approvalStatus = "approved";

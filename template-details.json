@@ -38,8 +38,13 @@
     "language": "en",
     "components": [
       {
+        "type": "HEADER",
+        "format": "TEXT",
+        "text": "Order Placed"
+      },
+      {
         "type": "BODY",
-        "text": "Dear {{1}},\nYour order has been successfully received (Order No: {{2}}).\nWe will share your tracking ID as soon as your package is dispatched.",
+        "text": "Dear *{{1}}*,\nYour order has been successfully received *(Order No: {{2}}*).\nWe will share your tracking ID as soon as your package is dispatched.",
         "example": {
           "body_text": [
             [
@@ -61,35 +66,6 @@
       }
     ],
     "id": "1578409623328903"
-  },
-  {
-    "name": "orderreceivedbuggly",
-    "status": "APPROVED",
-    "category": "MARKETING",
-    "language": "en",
-    "components": [
-      {
-        "type": "BODY",
-        "text": "Hello {{1}},\nThank you for shopping at Buggly Farms! 🌱\n\n✅ Your order #{{2}} has been placed successfully.\n📦 Items: {{3}}\n💰 Total: ₹{{4}}\n📍Address : {{5}}\nPayment Method: {{6}}\n\nWe’ll notify you with a tracking update once your order is handed over to our courier partner.",
-        "example": {
-          "body_text": [
-            [
-              "rohit",
-              "23823",
-              "protein worms",
-              "500",
-              "a-5 hari nagar part 2",
-              "COD"
-            ]
-          ]
-        }
-      },
-      {
-        "type": "FOOTER",
-        "text": "buggly"
-      }
-    ],
-    "id": "4091758927711545"
   },
   {
     "name": "buggly_order_shipped",

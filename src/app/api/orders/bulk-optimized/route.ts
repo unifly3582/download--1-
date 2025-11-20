@@ -27,6 +27,7 @@ async function bulkOrdersOptimizedHandler(
     const results = [];
     const batch = db.batch();
     const timestamp = admin.firestore.Timestamp.now();
+    const cancelledOrders = []; // Track cancelled orders for notifications
 
     for (let i = 0; i < orderDocs.length; i++) {
       const orderDoc = orderDocs[i];
@@ -107,6 +108,13 @@ async function bulkOrdersOptimizedHandler(
                 'cancellation.reason': 'Admin cancelled',
                 updatedAt: timestamp
               });
+              // Store order data for notification after batch commit
+              cancelledOrders.push({
+                ...orderData,
+                orderId,
+                internalStatus: 'cancelled',
+                customerFacingStatus: 'cancelled'
+              });
               results.push({ orderId, success: true });
             } else {
               results.push({ orderId, success: false, error: 'Order cannot be cancelled in current status' });
@@ -123,6 +131,25 @@ async function bulkOrdersOptimizedHandler(
 
     // Single batch commit for all operations
     await batch.commit();
+
+    // Send WhatsApp notifications for cancelled orders (async, don't wait)
+    if (action === 'cancel' && cancelledOrders.length > 0) {
+      console.log(`[BULK_CANCEL] Sending ${cancelledOrders.length} cancellation notifications`);
+      
+      // Send notifications in background (don't block response)
+      Promise.all(
+        cancelledOrders.map(async (order) => {
+          try {
+            const { createNotificationService } = await import('@/lib/oms/notifications');
+            const notificationService = createNotificationService();
+            await notificationService.sendOrderCancelledNotification(order as any);
+            console.log(`[BULK_CANCEL] Notification sent for order ${order.orderId}`);
+          } catch (error) {
+            console.error(`[BULK_CANCEL] Notification failed for order ${order.orderId}:`, error);
+          }
+        })
+      ).catch(err => console.error('[BULK_CANCEL] Notification batch error:', err));
+    }
 
     const successCount = results.filter(r => r.success).length;
     const failureCount = results.length - successCount;

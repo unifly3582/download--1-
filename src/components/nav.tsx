@@ -14,6 +14,7 @@ import {
   BarChart3,
   Box,
   Video,
+  AlertCircle,
 } from 'lucide-react';
 import {
   SidebarContent,
@@ -27,6 +28,7 @@ import { Logo } from '@/components/logo';
 const navItems = [
   { href: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/orders', icon: ShoppingCart, label: 'Orders' },
+  { href: '/issues', icon: AlertCircle, label: 'Issues' },
   { href: '/customers', icon: Users, label: 'Customers' },
   { href: '/coupons', icon: Ticket, label: 'Coupons' },
   { href: '/testimonials', icon: Video, label: 'Testimonials' },

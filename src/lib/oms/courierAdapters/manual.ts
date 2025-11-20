@@ -31,6 +31,11 @@ export async function createManualShipment(
     success: true,
     awb: awb,
     trackingUrl: trackingUrl,
+    metadata: {
+      shippedAt: new Date().toISOString(),
+      manualEntry: true,
+    },
+    // Keep for logging only
     apiRequest: apiRequest,
     apiResponse: {
         awb,

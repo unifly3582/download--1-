@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PlusCircle, MoreHorizontal, AlertTriangle, Truck, RefreshCw, Search, Download, Filter, X, TrendingUp, Package, Clock, CheckCircle, Maximize2, Minimize2 } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, AlertTriangle, Truck, RefreshCw, Search, Download, Filter, X, TrendingUp, Package, Clock, CheckCircle, Maximize2, Minimize2, Loader2 } from 'lucide-react';
 import { CreateOrderDialog } from './create-order-dialog';
 import { ShipOrderDialog } from './ship-order-dialog';
 import { UpdateDimensionsDialog } from './update-dimensions-dialog';
@@ -64,6 +64,9 @@ export default function OrdersPage() {
 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchType, setSearchType] = useState<'orderId' | 'name' | 'phone'>('orderId');
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<OrderDisplay[]>([]);
   const [paymentFilter, setPaymentFilter] = useState<string>('all');
   const [sourceFilter, setSourceFilter] = useState<string>('all');
   const [courierFilter, setCourierFilter] = useState<string>('all');
@@ -89,27 +92,67 @@ export default function OrdersPage() {
   useEffect(() => {
     setSelectedOrders(new Set());
     setSearchQuery('');
+    setSearchResults([]);
     setPaymentFilter('all');
     setSourceFilter('all');
     setCourierFilter('all');
   }, [activeTab]);
 
+  // Optimized search function
+  const performSearch = useCallback(async () => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const params = new URLSearchParams({
+        searchType,
+        query: searchQuery.trim(),
+        status: activeTab,
+        limit: '100'
+      });
+
+      const result = await authenticatedFetch(`/api/orders/search?${params}`);
+      
+      if (result.success) {
+        setSearchResults(result.data);
+      } else {
+        toast({
+          title: 'Search failed',
+          description: result.error || 'Failed to search orders',
+          variant: 'destructive'
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Search error',
+        description: error.message || 'Failed to search orders',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSearching(false);
+    }
+  }, [searchQuery, searchType, activeTab, toast]);
+
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery.trim()) {
+        performSearch();
+      } else {
+        setSearchResults([]);
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, searchType, performSearch]);
+
   // Filtered orders based on search and filters
   const filteredOrders = useMemo(() => {
-    let filtered = orders;
-
-    // Search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(order =>
-        order.orderId.toLowerCase().includes(query) ||
-        order.customerInfo.name.toLowerCase().includes(query) ||
-        order.customerInfo.phone.includes(query) ||
-        order.customerInfo.email?.toLowerCase().includes(query) ||
-        order.shippingAddress.zip.includes(query) ||
-        order.shipmentInfo?.awb?.toLowerCase().includes(query)
-      );
-    }
+    // Use search results if searching, otherwise use regular orders
+    let filtered = searchQuery.trim() ? searchResults : orders;
 
     // Payment filter
     if (paymentFilter !== 'all') {
@@ -133,7 +176,7 @@ export default function OrdersPage() {
     }
 
     return filtered;
-  }, [orders, searchQuery, paymentFilter, sourceFilter, courierFilter]);
+  }, [orders, searchResults, searchQuery, paymentFilter, sourceFilter, courierFilter]);
 
   // Sorted orders based on sort criteria
   const sortedOrders = useMemo(() => {
@@ -335,22 +378,26 @@ export default function OrdersPage() {
     if (!confirmed) return;
 
     try {
-      // Use optimized bulk API
-      const result = await authenticatedFetch('/api/orders/bulk-optimized', {
-        method: 'POST',
-        body: JSON.stringify({
-          action: 'cancel',
-          orderIds: [orderId]
-        }),
+      // Use dedicated cancel endpoint with WhatsApp notification
+      const result = await authenticatedFetch(`/api/orders/${orderId}/cancel`, {
+        method: 'POST'
       });
 
-      // Optimistic update
-      removeOrder(orderId);
+      if (result.success) {
+        // Optimistic update
+        removeOrder(orderId);
 
-      toast({
-        title: 'Success',
-        description: 'Order cancelled successfully',
-      });
+        toast({
+          title: 'Success',
+          description: 'Order cancelled. Customer will receive WhatsApp notification.',
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: result.error || 'Failed to cancel order',
+          variant: 'destructive'
+        });
+      }
 
     } catch (error: any) {
       toast({
@@ -763,8 +810,11 @@ export default function OrdersPage() {
         {/* Order Source */}
         <TableCell>
           <div className="space-y-1">
-            <Badge variant="outline" className="text-xs">
-              {order.orderSource.replace('_', ' ')}
+            <Badge 
+              variant={order.orderSource === 'admin_quick_ship' ? 'default' : 'outline'} 
+              className={order.orderSource === 'admin_quick_ship' ? 'text-xs bg-amber-500' : 'text-xs'}
+            >
+              {order.orderSource === 'admin_quick_ship' ? '⚡ Quick Ship' : order.orderSource.replace('_', ' ')}
             </Badge>
             {order.trafficSource?.source && (
               <div className="text-xs text-muted-foreground">
@@ -841,6 +891,19 @@ export default function OrdersPage() {
             {order.shipmentInfo?.currentTrackingStatus && (
               <div className="text-xs text-muted-foreground">
                 {order.shipmentInfo.currentTrackingStatus}
+              </div>
+            )}
+            {order.shipmentInfo?.trackingLocation && (
+              <div className="text-xs text-blue-600">
+                📍 {order.shipmentInfo.trackingLocation}
+              </div>
+            )}
+            {order.shipmentInfo?.lastTrackedAt && (
+              <div className="text-xs text-muted-foreground">
+                Updated: {new Date(order.shipmentInfo.lastTrackedAt).toLocaleDateString('en-IN', {
+                  day: '2-digit',
+                  month: 'short'
+                })}
               </div>
             )}
           </div>
@@ -1274,16 +1337,50 @@ export default function OrdersPage() {
         <CardContent className="pt-6">
           <div className="flex flex-col gap-4">
             <div className="flex flex-wrap items-center gap-2">
+              {/* Search Type Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="min-w-[120px]">
+                    {searchType === 'orderId' && 'Order ID'}
+                    {searchType === 'name' && 'Name'}
+                    {searchType === 'phone' && 'Phone'}
+                    <Filter className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuLabel>Search By</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setSearchType('orderId')}>
+                    Order ID
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSearchType('name')}>
+                    Customer Name
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSearchType('phone')}>
+                    Phone Number
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Search Input */}
               <div className="relative flex-1 min-w-[200px]">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="order-search"
-                  placeholder="Search by Order ID, Name, Phone, Email, Pincode, AWB..."
+                  placeholder={
+                    searchType === 'orderId' ? 'Search by Order ID...' :
+                    searchType === 'name' ? 'Search by Customer Name...' :
+                    'Search by Phone Number...'
+                  }
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10 pr-10"
+                  disabled={isSearching}
                 />
-                {searchQuery && (
+                {isSearching && (
+                  <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                )}
+                {searchQuery && !isSearching && (
                   <button
                     onClick={() => setSearchQuery('')}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
@@ -1320,9 +1417,10 @@ export default function OrdersPage() {
                   <DropdownMenuLabel>Order Source</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => setSourceFilter('all')}>All</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSourceFilter('website')}>Website</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSourceFilter('whatsapp')}>WhatsApp</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSourceFilter('manual')}>Manual</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSourceFilter('admin_form')}>Admin Form</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSourceFilter('admin_quick_ship')}>⚡ Quick Ship</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSourceFilter('customer_app')}>Customer App</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSourceFilter('ai_agent')}>AI Agent</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 
@@ -1375,6 +1473,7 @@ export default function OrdersPage() {
                   size="sm"
                   onClick={() => {
                     setSearchQuery('');
+                    setSearchResults([]);
                     setPaymentFilter('all');
                     setSourceFilter('all');
                     setCourierFilter('all');
@@ -1386,7 +1485,19 @@ export default function OrdersPage() {
               )}
             </div>
 
-            {filteredOrders.length !== orders.length && (
+            {/* Search Results Indicator */}
+            {searchQuery && (
+              <div className="flex items-center gap-2 text-sm">
+                <Badge variant="secondary">
+                  {isSearching ? 'Searching...' : `${searchResults.length} results found`}
+                </Badge>
+                <span className="text-muted-foreground">
+                  Searching by {searchType === 'orderId' ? 'Order ID' : searchType === 'name' ? 'Name' : 'Phone'}
+                </span>
+              </div>
+            )}
+
+            {filteredOrders.length !== orders.length && !searchQuery && (
               <p className="text-sm text-muted-foreground">
                 Showing {filteredOrders.length} of {orders.length} orders
               </p>
@@ -1416,7 +1527,7 @@ export default function OrdersPage() {
           <TabsTrigger value="completed">Completed</TabsTrigger>
           <TabsTrigger value="rejected">Rejected</TabsTrigger>
           <TabsTrigger value="issues">Issues</TabsTrigger>
-
+          <TabsTrigger value="payment-failed">Payment Pending</TabsTrigger>
         </TabsList>
         <TabsContent value="to-approve"><Card><CardContent className="p-0">{useVirtualScroll ? renderVirtualTable() : renderTable()}</CardContent></Card></TabsContent>
         <TabsContent value="to-ship"><Card><CardContent className="p-0">{useVirtualScroll ? renderVirtualTable() : renderTable()}</CardContent></Card></TabsContent>
@@ -1424,7 +1535,7 @@ export default function OrdersPage() {
         <TabsContent value="completed"><Card><CardContent className="p-0">{useVirtualScroll ? renderVirtualTable() : renderTable()}</CardContent></Card></TabsContent>
         <TabsContent value="rejected"><Card><CardContent className="p-0">{useVirtualScroll ? renderVirtualTable() : renderTable()}</CardContent></Card></TabsContent>
         <TabsContent value="issues"><Card><CardContent className="p-0">{useVirtualScroll ? renderVirtualTable() : renderTable()}</CardContent></Card></TabsContent>
-
+        <TabsContent value="payment-failed"><Card><CardContent className="p-0">{useVirtualScroll ? renderVirtualTable() : renderTable()}</CardContent></Card></TabsContent>
       </Tabs>
 
       <CreateOrderDialog
@@ -1462,6 +1573,7 @@ export default function OrdersPage() {
         isOpen={isDetailsDialogOpen}
         onOpenChange={setIsDetailsDialogOpen}
         order={selectedOrder}
+        onRefresh={refresh}
       />
     </div>
   );

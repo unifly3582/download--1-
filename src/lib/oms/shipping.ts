@@ -53,11 +53,9 @@ export async function createShipment(orderId: string, courier: string, manualAwb
       return { success: false, error: errorMsg };
   }
 
-  // --- Centralized Firestore Update --- 
+  // --- Centralized Firestore Update (OPTIMIZED - Save only essential data) --- 
   const updatePayload: any = {
       "shipmentInfo.courierPartner": courier,
-      "shipmentInfo.apiRequest": result.apiRequest || null,
-      "shipmentInfo.apiResponse": result.apiResponse || null,
       "shipmentInfo.shipmentMode": courier === 'manual' ? 'manual' : 'auto_api',
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
   };
@@ -67,15 +65,49 @@ export async function createShipment(orderId: string, courier: string, manualAwb
       updatePayload["shipmentInfo.trackingUrl"] = result.trackingUrl;
       updatePayload.internalStatus = "shipped";
       
+      // Save essential metadata only (not full API request/response)
+      if (result.metadata) {
+        if (result.metadata.pickupLocation) {
+          updatePayload["shipmentInfo.pickupLocation"] = result.metadata.pickupLocation;
+        }
+        if (result.metadata.uploadWbn) {
+          updatePayload["shipmentInfo.uploadWbn"] = result.metadata.uploadWbn;
+        }
+        if (result.metadata.shippedAt) {
+          updatePayload["shipmentInfo.shippedAt"] = result.metadata.shippedAt;
+        }
+      }
+      
       // Enable automatic tracking for API-based couriers (not manual)
       if (courier !== 'manual') {
         updatePayload.needsTracking = true;
       }
       
-      logger.info('Successfully created shipment', { orderId, courier, awb: result.awb });
+      logger.info('Successfully created shipment', { 
+        orderId, 
+        courier, 
+        awb: result.awb,
+        // Log full API data for debugging (not saved to DB)
+        apiRequest: result.apiRequest,
+        apiResponse: result.apiResponse
+      });
   } else {
       updatePayload["shipmentInfo.error"] = result.error;
-      logger.error('Failed to create shipment', null, { orderId, courier, error: result.error });
+      
+      // For errors, optionally save minimal debug info
+      // (You can remove this if you don't want any API data saved)
+      if (result.apiResponse?.packages?.[0]?.remarks) {
+        updatePayload["shipmentInfo.errorDetails"] = result.apiResponse.packages[0].remarks.join(', ');
+      }
+      
+      logger.error('Failed to create shipment', null, { 
+        orderId, 
+        courier, 
+        error: result.error,
+        // Log full API data for debugging
+        apiRequest: result.apiRequest,
+        apiResponse: result.apiResponse
+      });
   }
 
   await orderRef.update(updatePayload);

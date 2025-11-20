@@ -22,18 +22,23 @@ import {
     Phone,
     Mail,
     Copy,
-    ExternalLink
+    ExternalLink,
+    ClipboardList,
+    Plus
 } from 'lucide-react';
 import type { Order } from '@/types/order';
+import { AddActionLogDialog } from './add-action-log-dialog';
 
 interface OrderDetailsDialogProps {
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
     order: Order & { id: string } | null;
+    onRefresh?: () => void;
 }
 
-export function OrderDetailsDialog({ isOpen, onOpenChange, order }: OrderDetailsDialogProps) {
+export function OrderDetailsDialog({ isOpen, onOpenChange, order, onRefresh }: OrderDetailsDialogProps) {
     const [copiedField, setCopiedField] = useState<string | null>(null);
+    const [showActionLogDialog, setShowActionLogDialog] = useState(false);
 
     if (!order) return null;
 
@@ -52,6 +57,64 @@ export function OrderDetailsDialog({ isOpen, onOpenChange, order }: OrderDetails
         if (status.includes('pending')) return 'bg-yellow-100 text-yellow-800';
         return 'bg-gray-100 text-gray-800';
     };
+
+    const getActionTypeLabel = (actionType: string) => {
+        const labels: Record<string, string> = {
+            call_placed: '📞 Call Placed',
+            call_attempted: '📵 Call Attempted',
+            whatsapp_sent: '💬 WhatsApp Sent',
+            email_sent: '📧 Email Sent',
+            sms_sent: '📱 SMS Sent',
+            ticket_raised: '🎫 Ticket Raised',
+            address_verified: '📍 Address Verified',
+            address_updated: '🔄 Address Updated',
+            payment_verified: '💳 Payment Verified',
+            payment_issue: '⚠️ Payment Issue',
+            refund_initiated: '💰 Refund Initiated',
+            courier_contacted: '🚚 Courier Contacted',
+            shipment_delayed: '⏰ Shipment Delayed',
+            delivery_rescheduled: '📅 Delivery Rescheduled',
+            customer_complaint: '😟 Customer Complaint',
+            quality_issue: '⚠️ Quality Issue',
+            return_requested: '↩️ Return Requested',
+            replacement_sent: '🔄 Replacement Sent',
+            follow_up: '👀 Follow-up',
+            internal_note: '📝 Internal Note',
+            other: '📋 Other'
+        };
+        return labels[actionType] || actionType;
+    };
+
+    const getOutcomeColor = (outcome: string) => {
+        const colors: Record<string, string> = {
+            resolved: 'bg-green-100 text-green-800',
+            pending: 'bg-yellow-100 text-yellow-800',
+            escalated: 'bg-orange-100 text-orange-800',
+            no_response: 'bg-gray-100 text-gray-800'
+        };
+        return colors[outcome] || 'bg-gray-100 text-gray-800';
+    };
+
+    // Action log is now available for all orders, not just pending ones
+    const hasActionLog = order.shipmentInfo?.actionLog && order.shipmentInfo.actionLog.length > 0;
+    const actionLogCount = order.shipmentInfo?.actionLog?.length || 0;
+    
+    // Calculate action log summary
+    const actionLogSummary = order.shipmentInfo?.actionLog ? {
+        total: order.shipmentInfo.actionLog.length,
+        resolved: order.shipmentInfo.actionLog.filter(log => log.outcome === 'resolved').length,
+        pending: order.shipmentInfo.actionLog.filter(log => log.outcome === 'pending').length,
+        escalated: order.shipmentInfo.actionLog.filter(log => log.outcome === 'escalated').length,
+        noResponse: order.shipmentInfo.actionLog.filter(log => log.outcome === 'no_response').length,
+        lastAction: order.shipmentInfo.actionLog.length > 0 
+            ? order.shipmentInfo.actionLog.sort((a, b) => 
+                new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+              )[0]
+            : null,
+        pendingActions: order.shipmentInfo.actionLog.filter(log => 
+            log.nextAction && log.outcome !== 'resolved'
+        ).length
+    } : null;
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -264,6 +327,52 @@ export function OrderDetailsDialog({ isOpen, onOpenChange, order }: OrderDetails
                                     </Badge>
                                 </div>
                             )}
+
+                            {order.shipmentInfo?.trackingLocation && (
+                                <div>
+                                    <div className="text-sm text-muted-foreground">Current Location:</div>
+                                    <div className="text-sm font-medium">{order.shipmentInfo.trackingLocation}</div>
+                                </div>
+                            )}
+
+                            {order.shipmentInfo?.trackingInstructions && (
+                                <div>
+                                    <div className="text-sm text-muted-foreground">Instructions:</div>
+                                    <div className="text-sm">{order.shipmentInfo.trackingInstructions}</div>
+                                </div>
+                            )}
+
+                            {order.shipmentInfo?.lastTrackedAt && (
+                                <div>
+                                    <div className="text-sm text-muted-foreground">Last Tracked:</div>
+                                    <div className="text-sm">
+                                        {new Date(order.shipmentInfo.lastTrackedAt).toLocaleString('en-IN', {
+                                            day: '2-digit',
+                                            month: 'short',
+                                            year: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                            hour12: true
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
+                            {order.shipmentInfo?.shippedAt && (
+                                <div>
+                                    <div className="text-sm text-muted-foreground">Shipped On:</div>
+                                    <div className="text-sm">
+                                        {new Date(order.shipmentInfo.shippedAt).toLocaleString('en-IN', {
+                                            day: '2-digit',
+                                            month: 'short',
+                                            year: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                            hour12: true
+                                        })}
+                                    </div>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
 
@@ -311,6 +420,29 @@ export function OrderDetailsDialog({ isOpen, onOpenChange, order }: OrderDetails
                                     }
                                 </div>
                             </div>
+
+                            {order.deliveryEstimate?.expectedDate && (
+                                <div className="space-y-1 pt-2 border-t">
+                                    <div className="text-sm text-muted-foreground">Expected Delivery:</div>
+                                    <div className="text-sm font-medium text-green-600">
+                                        {new Date(order.deliveryEstimate.expectedDate).toLocaleDateString('en-IN', {
+                                            day: '2-digit',
+                                            month: 'short',
+                                            year: 'numeric'
+                                        })}
+                                        {order.deliveryEstimate.timeSlot && (
+                                            <span className="ml-2 text-xs">
+                                                ({order.deliveryEstimate.timeSlot})
+                                            </span>
+                                        )}
+                                    </div>
+                                    {order.deliveryEstimate.confidence && (
+                                        <div className="text-xs text-muted-foreground">
+                                            Confidence: {order.deliveryEstimate.confidence}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 </div>
@@ -392,6 +524,173 @@ export function OrderDetailsDialog({ isOpen, onOpenChange, order }: OrderDetails
                     </CardContent>
                 </Card>
 
+                {/* Action Log - Available for All Orders */}
+                <Card className="mt-6">
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <CardTitle className="flex items-center gap-2">
+                            <ClipboardList className="h-4 w-4" />
+                            Action Log
+                            {actionLogCount > 0 && (
+                                <Badge variant="secondary" className="ml-2">
+                                    {actionLogCount} {actionLogCount === 1 ? 'entry' : 'entries'}
+                                </Badge>
+                            )}
+                        </CardTitle>
+                        <Button
+                            size="sm"
+                            onClick={() => setShowActionLogDialog(true)}
+                        >
+                            <Plus className="h-4 w-4 mr-1" />
+                            Add Action
+                        </Button>
+                    </CardHeader>
+                    <CardContent>
+                        {/* Action Log Summary */}
+                        {actionLogSummary && actionLogSummary.total > 0 && (
+                            <div className="mb-6 p-4 bg-muted rounded-lg">
+                                <div className="text-sm font-medium mb-3">Summary</div>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <div className="text-center">
+                                        <div className="text-2xl font-bold text-green-600">
+                                            {actionLogSummary.resolved}
+                                        </div>
+                                        <div className="text-xs text-muted-foreground">Resolved</div>
+                                    </div>
+                                    <div className="text-center">
+                                        <div className="text-2xl font-bold text-yellow-600">
+                                            {actionLogSummary.pending}
+                                        </div>
+                                        <div className="text-xs text-muted-foreground">Pending</div>
+                                    </div>
+                                    <div className="text-center">
+                                        <div className="text-2xl font-bold text-orange-600">
+                                            {actionLogSummary.escalated}
+                                        </div>
+                                        <div className="text-xs text-muted-foreground">Escalated</div>
+                                    </div>
+                                    <div className="text-center">
+                                        <div className="text-2xl font-bold text-gray-600">
+                                            {actionLogSummary.noResponse}
+                                        </div>
+                                        <div className="text-xs text-muted-foreground">No Response</div>
+                                    </div>
+                                </div>
+                                
+                                {actionLogSummary.lastAction && (
+                                    <div className="mt-4 pt-4 border-t">
+                                        <div className="text-xs text-muted-foreground mb-1">Last Action</div>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <Badge variant="outline" className="text-xs">
+                                                {getActionTypeLabel(actionLogSummary.lastAction.actionType)}
+                                            </Badge>
+                                            <span className="text-xs text-muted-foreground">
+                                                {new Date(actionLogSummary.lastAction.timestamp).toLocaleDateString('en-IN', {
+                                                    day: '2-digit',
+                                                    month: 'short',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit'
+                                                })}
+                                            </span>
+                                            <Badge className={`text-xs ${getOutcomeColor(actionLogSummary.lastAction.outcome)}`}>
+                                                {actionLogSummary.lastAction.outcome.replace(/_/g, ' ')}
+                                            </Badge>
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                {actionLogSummary.pendingActions > 0 && (
+                                    <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
+                                        <span className="font-medium text-yellow-800">
+                                            ⚠️ {actionLogSummary.pendingActions} pending {actionLogSummary.pendingActions === 1 ? 'action' : 'actions'} requiring follow-up
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        
+                        {/* Action Log Entries */}
+                        {hasActionLog ? (
+                                <div className="space-y-4">
+                                    {order.shipmentInfo?.actionLog
+                                        ?.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+                                        .map((log) => (
+                                            <div key={log.actionId} className="border rounded-lg p-4 space-y-3">
+                                                <div className="flex items-start justify-between">
+                                                    <div className="space-y-1">
+                                                        <div className="flex items-center gap-2">
+                                                            <Badge variant="outline">
+                                                                {getActionTypeLabel(log.actionType)}
+                                                            </Badge>
+                                                            <Badge className={getOutcomeColor(log.outcome)}>
+                                                                {log.outcome.replace(/_/g, ' ')}
+                                                            </Badge>
+                                                        </div>
+                                                        <div className="text-xs text-muted-foreground">
+                                                            {new Date(log.timestamp).toLocaleString('en-IN', {
+                                                                day: '2-digit',
+                                                                month: 'short',
+                                                                year: 'numeric',
+                                                                hour: '2-digit',
+                                                                minute: '2-digit',
+                                                                hour12: true
+                                                            })}
+                                                            {' • '}
+                                                            by {log.actionBy}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <div>
+                                                        <div className="text-sm font-medium text-muted-foreground">Action Taken:</div>
+                                                        <div className="text-sm">{log.actionDetails}</div>
+                                                    </div>
+
+                                                    {log.customerResponse && (
+                                                        <div>
+                                                            <div className="text-sm font-medium text-muted-foreground">Customer Response:</div>
+                                                            <div className="text-sm">{log.customerResponse}</div>
+                                                        </div>
+                                                    )}
+
+                                                    {log.nextAction && (
+                                                        <div className="bg-yellow-50 border border-yellow-200 rounded p-2">
+                                                            <div className="text-sm font-medium text-yellow-800">Next Action:</div>
+                                                            <div className="text-sm text-yellow-700">{log.nextAction}</div>
+                                                            {log.nextActionBy && (
+                                                                <div className="text-xs text-yellow-600 mt-1">
+                                                                    Follow up by: {new Date(log.nextActionBy).toLocaleString('en-IN', {
+                                                                        day: '2-digit',
+                                                                        month: 'short',
+                                                                        hour: '2-digit',
+                                                                        minute: '2-digit',
+                                                                        hour12: true
+                                                                    })}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+
+                                                    {log.notes && (
+                                                        <div>
+                                                            <div className="text-sm font-medium text-muted-foreground">Notes:</div>
+                                                            <div className="text-sm text-muted-foreground italic">{log.notes}</div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-8 text-muted-foreground">
+                                    <ClipboardList className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                                    <p>No actions logged yet</p>
+                                    <p className="text-sm">Click "Add Action" to log your first action</p>
+                                </div>
+                            )}
+                    </CardContent>
+                </Card>
+
                 {/* Traffic Source (if available) */}
                 {order.trafficSource && (
                     <Card className="mt-6">
@@ -427,6 +726,18 @@ export function OrderDetailsDialog({ isOpen, onOpenChange, order }: OrderDetails
                     </Card>
                 )}
             </DialogContent>
+
+            {/* Add Action Log Dialog */}
+            <AddActionLogDialog
+                isOpen={showActionLogDialog}
+                onOpenChange={setShowActionLogDialog}
+                orderId={order.orderId}
+                onSuccess={() => {
+                    if (onRefresh) {
+                        onRefresh();
+                    }
+                }}
+            />
         </Dialog>
     );
 }

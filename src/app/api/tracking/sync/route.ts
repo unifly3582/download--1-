@@ -149,46 +149,53 @@ async function processTrackingResponse(trackingData: any, orders: any[]) {
         updateData.needsTracking = false;
         updateData['shipmentInfo.trackingDisabledReason'] = `Order ${newStatus}`;
       }
-      
-      // Send WhatsApp notification for key status changes (with duplicate prevention)
-      // NOTE: Only enabled for approved templates. Enable others after Meta approval.
-      const enabledNotifications = {
-        shipped: true,              // ✅ Approved - buggly_order_shipped
-        out_for_delivery: true,     // ✅ Approved - buggly_out_for_delivery
-        delivered: false            // ❌ Not created yet - needs to be submitted to Meta
-      };
-      
-      const lastNotifiedStatus = currentOrder.notificationHistory?.lastNotifiedStatus;
-      const delhiveryStatus = shipment.Status.Status;
-      
-      // Determine if this is "out for delivery" status
-      const isOutForDelivery = delhiveryStatus?.toLowerCase().includes('out for delivery') || 
-                               delhiveryStatus?.toLowerCase().includes('out-for-delivery');
-      
-      let notificationStatus = newStatus;
-      if (isOutForDelivery) {
-        notificationStatus = 'out_for_delivery';
+    }
+    
+    // Send WhatsApp notification for key status changes (with duplicate prevention)
+    // NOTE: Only enabled for approved templates. Enable others after Meta approval.
+    // IMPORTANT: Notifications are checked regardless of status change to catch missed notifications
+    const enabledNotifications = {
+      shipped: true,              // ✅ Approved - buggly_order_shipped
+      out_for_delivery: true,     // ✅ Approved - buggly_out_for_delivery
+      delivered: false            // ❌ Not created yet - needs to be submitted to Meta
+    };
+    
+    const lastNotifiedStatus = currentOrder.notificationHistory?.lastNotifiedStatus;
+    const delhiveryStatus = shipment.Status.Status;
+    
+    // Determine notification status based on Delhivery status
+    let notificationStatus = newStatus;
+    
+    // Check for "out for delivery" status
+    const isOutForDelivery = delhiveryStatus?.toLowerCase().includes('out for delivery') || 
+                             delhiveryStatus?.toLowerCase().includes('out-for-delivery');
+    
+    if (isOutForDelivery) {
+      notificationStatus = 'out_for_delivery';
+    }
+    // For shipped orders that haven't been notified yet
+    else if (['shipped', 'in_transit', 'pending'].includes(newStatus) && !lastNotifiedStatus) {
+      notificationStatus = 'shipped';
+    }
+    
+    // Only send notification if:
+    // 1. Status notification is enabled (template approved)
+    // 2. We haven't already sent notification for this status
+    const isEnabled = enabledNotifications[notificationStatus as keyof typeof enabledNotifications];
+    const shouldNotify = isEnabled && notificationStatus !== lastNotifiedStatus;
+    
+    if (shouldNotify) {
+      try {
+        await sendStatusNotification(orderDoc.ref, notificationStatus, currentOrder, shipment);
+        updateData['notificationHistory.lastNotifiedStatus'] = notificationStatus;
+        updateData['notificationHistory.lastNotifiedAt'] = new Date().toISOString();
+        console.log(`[TRACKING_SYNC] Notification sent: ${notificationStatus} for ${currentOrder.orderId}`);
+      } catch (notificationError: any) {
+        console.error('[TRACKING_SYNC] Notification failed:', notificationError);
+        // Don't fail the tracking update if notification fails
       }
-      
-      // Only send notification if:
-      // 1. Status notification is enabled (template approved)
-      // 2. We haven't already sent notification for this status
-      const isEnabled = enabledNotifications[notificationStatus as keyof typeof enabledNotifications];
-      const shouldNotify = isEnabled && notificationStatus !== lastNotifiedStatus;
-      
-      if (shouldNotify) {
-        try {
-          await sendStatusNotification(orderDoc.ref, notificationStatus, currentOrder, shipment);
-          updateData['notificationHistory.lastNotifiedStatus'] = notificationStatus;
-          updateData['notificationHistory.lastNotifiedAt'] = new Date().toISOString();
-          console.log(`[TRACKING_SYNC] Notification sent: ${notificationStatus} for ${currentOrder.orderId}`);
-        } catch (notificationError: any) {
-          console.error('[TRACKING_SYNC] Notification failed:', notificationError);
-          // Don't fail the tracking update if notification fails
-        }
-      } else if (!isEnabled && ['shipped', 'out_for_delivery', 'delivered'].includes(notificationStatus)) {
-        console.log(`[TRACKING_SYNC] Notification skipped (not enabled): ${notificationStatus} for ${currentOrder.orderId}`);
-      }
+    } else {
+      console.log(`[TRACKING_SYNC] Notification skipped for ${currentOrder.orderId}: enabled=${isEnabled}, status=${notificationStatus}, lastNotified=${lastNotifiedStatus}`);
     }
     
     // Update delivery estimate if available
