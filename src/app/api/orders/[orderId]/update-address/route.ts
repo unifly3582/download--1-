@@ -14,10 +14,10 @@ const UpdateAddressSchema = z.object({
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { orderId: string } }
+  context: { params: Promise<{ orderId: string }> }
 ) {
   try {
-    const { orderId } = params;
+    const { orderId } = await context.params;
 
     if (!orderId) {
       return NextResponse.json(
