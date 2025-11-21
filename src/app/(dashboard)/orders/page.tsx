@@ -15,6 +15,7 @@ import { CreateOrderDialog } from './create-order-dialog';
 import { ShipOrderDialog } from './ship-order-dialog';
 import { UpdateDimensionsDialog } from './update-dimensions-dialog';
 import { OrderDetailsDialog } from './order-details-dialog';
+import { EditAddressDialog } from './edit-address-dialog';
 import { useVirtualizer } from '@tanstack/react-virtual';
 
 import { authenticatedFetch } from '@/lib/api/utils';
@@ -56,6 +57,7 @@ export default function OrdersPage() {
   const [isShipDialogOpen, setIsShipDialogOpen] = useState(false);
   const [isUpdateDimsOpen, setIsUpdateDimsOpen] = useState(false);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const [isEditAddressOpen, setIsEditAddressOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<OrderDisplay | null>(null);
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
   const [isBulkApproving, setIsBulkApproving] = useState(false);
@@ -318,6 +320,11 @@ export default function OrdersPage() {
   const handleUpdateDimsClick = (order: OrderDisplay) => {
     setSelectedOrder(order);
     setIsUpdateDimsOpen(true);
+  };
+
+  const handleEditAddressClick = (order: OrderDisplay) => {
+    setSelectedOrder(order);
+    setIsEditAddressOpen(true);
   };
 
   const handleViewDetailsClick = async (order: OrderDisplay) => {
@@ -831,7 +838,8 @@ export default function OrdersPage() {
 
         {/* Address & Pincode */}
         <TableCell>
-          <div className="space-y-1 max-w-[200px]">
+          <div className="space-y-1 max-w-[250px]">
+            <div className="text-sm font-medium">{order.shippingAddress.street}</div>
             <div className="text-sm">{order.shippingAddress.city}, {order.shippingAddress.state}</div>
             <div className="text-sm font-medium">PIN: {order.shippingAddress.zip}</div>
             {order.shipmentInfo?.courierPartner && (
@@ -839,6 +847,14 @@ export default function OrdersPage() {
                 Courier: {order.shipmentInfo.courierPartner}
               </div>
             )}
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-1 h-7 text-xs"
+              onClick={() => handleEditAddressClick(order)}
+            >
+              ✏️ Edit Address
+            </Button>
           </div>
         </TableCell>
 
@@ -941,6 +957,9 @@ export default function OrdersPage() {
             <DropdownMenuContent>
               <DropdownMenuItem onClick={() => handleViewDetailsClick(order)}>
                 View Full Details
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleEditAddressClick(order)}>
+                ✏️ Edit Address
               </DropdownMenuItem>
               {order.internalStatus === 'created_pending' && (
                 <>
@@ -1575,6 +1594,19 @@ export default function OrdersPage() {
         order={selectedOrder}
         onRefresh={refresh}
       />
+
+      {selectedOrder && (
+        <EditAddressDialog
+          isOpen={isEditAddressOpen}
+          onOpenChange={setIsEditAddressOpen}
+          orderId={selectedOrder.orderId}
+          currentAddress={selectedOrder.shippingAddress}
+          onAddressUpdated={() => {
+            setIsEditAddressOpen(false);
+            refresh();
+          }}
+        />
+      )}
     </div>
   );
 }
