@@ -353,8 +353,9 @@ export const CustomerCreateOrderSchema = z.object({
   // Coupon Code
   couponCode: z.string().optional(),
   
-  // Customer Info (no customerId required)
+  // Customer Info (customerId optional - will be generated if not provided)
   customerInfo: z.object({
+    customerId: z.string().optional(), // Optional - backend will generate from phone if not provided
     name: z.string().min(2),
     phone: z.string().min(10).max(15),
     email: z.string().email().optional()
