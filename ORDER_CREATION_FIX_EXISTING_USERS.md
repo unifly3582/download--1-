@@ -2,11 +2,23 @@
 
 ## Problem Identified
 
-When existing users (users who already have data in the system) log in and try to create an order, the order creation fails.
+When existing users (users who already have data in the system) log in and try to create an order, the order creation fails. Specifically:
+- **New users**: Can place orders successfully
+- **New users who re-login**: Can place orders successfully  
+- **Existing users with customer data and addresses**: Order creation fails
 
-## Root Cause
+## Root Causes
 
-The issue is in the **phone number normalization** during customer data updates in `src/lib/oms/customerUtils.ts`.
+Multiple issues were identified in the customer update flow in `src/lib/oms/customerUtils.ts`:
+
+### 1. Phone Number Normalization
+Phone numbers weren't being normalized consistently between database storage and incoming requests.
+
+### 2. Address Structure Mismatch
+Existing customers may have addresses with a `label` field (e.g., "Home", "Office"), but order creation doesn't include this field, causing validation conflicts.
+
+### 3. Overly Broad Data Spreading
+The update logic was spreading all incoming data (`...data`) which could include undefined fields or cause conflicts with existing customer data structure.
 
 ### Technical Details:
 
@@ -49,15 +61,35 @@ const newCustomerObject = {
 };
 ```
 
-#### 2. Existing Customer Update (Line ~100):
+#### 2. Existing Customer Update (Line ~185) - **MAJOR FIX**:
 ```typescript
 // Normalize phone number format to ensure consistency
 const normalizedPhone = phone.startsWith('+91') ? phone : `+91${phone}`;
 
+// Build update data carefully - only include fields that are explicitly provided
 let updateData: any = { 
-    ...data,
-    phone: normalizedPhone // Use normalized phone
+    phone: normalizedPhone // Always ensure phone is in normalized format
 };
+
+// Only update fields that are explicitly provided in data parameter
+if (data.name !== undefined) updateData.name = data.name;
+if (data.email !== undefined) updateData.email = data.email;
+if (data.preferredLanguage !== undefined) updateData.preferredLanguage = data.preferredLanguage;
+if (data.whatsappOptIn !== undefined) updateData.whatsappOptIn = data.whatsappOptIn;
+
+// Handle address updates for existing customer
+if (shippingAddress) {
+    // Normalize the address - remove any label field if it exists
+    const normalizedAddress = {
+        street: shippingAddress.street,
+        city: shippingAddress.city,
+        state: shippingAddress.state,
+        zip: shippingAddress.zip,
+        country: shippingAddress.country
+    };
+    
+    updateData.defaultAddress = normalizedAddress;
+}
 
 // Enhanced filtering to skip timestamp fields
 const cleanUpdateData = Object.fromEntries(
@@ -73,11 +105,17 @@ const cleanUpdateData = Object.fromEntries(
 
 ✅ **Phone Number Consistency**: All phone numbers are now normalized to `+91XXXXXXXXXX` format before any database operations
 
-✅ **Existing User Updates**: When existing users place orders, their customer data is updated without validation errors
+✅ **Address Structure Normalization**: Addresses are normalized to remove optional fields like `label` that might exist in saved addresses but not in order addresses
 
-✅ **New User Creation**: New users also get consistent phone number format from the start
+✅ **Selective Field Updates**: Only explicitly provided fields are updated, preventing undefined values or unwanted field overwrites
+
+✅ **Existing User Updates**: When existing users place orders, their customer data is updated without validation errors or field conflicts
+
+✅ **New User Creation**: New users also get consistent phone number and address format from the start
 
 ✅ **Timestamp Handling**: Improved filtering to prevent timestamp field conflicts during updates
+
+✅ **Better Logging**: Added logging to show which fields are being updated for easier debugging
 
 ## Testing Recommendations
 
@@ -119,19 +157,73 @@ Expected: System recognizes as same user, order succeeds
    - Verify order is created successfully
    - Check customer data is updated correctly
 
+## Why Existing Users Were Affected
+
+The issue specifically affected existing users because:
+
+1. **Existing customers** have complete profiles with addresses that may include optional fields like `label`
+2. **Order creation** sends minimal customer data (name, phone, email) and a shipping address without optional fields
+3. **The old update logic** used `...data` spread operator, which could:
+   - Include undefined fields
+   - Overwrite existing customer data unintentionally
+   - Cause validation failures when merging different address structures
+4. **New users** worked fine because they had no existing data to conflict with
+
+### The Specific Flow That Failed:
+
+```
+Existing User Login
+  ↓
+User has: { name, phone: "+918700925487", defaultAddress: { label: "Home", street: "...", ... } }
+  ↓
+User creates order with: { name, phone: "8700925487", shippingAddress: { street: "...", ... } }
+  ↓
+createOrUpdateCustomer called with spread operator: { ...data, phone, defaultAddress }
+  ↓
+Validation fails or field conflicts occur
+  ↓
+Order creation fails ❌
+```
+
+### The Fixed Flow:
+
+```
+Existing User Login
+  ↓
+User has: { name, phone: "+918700925487", defaultAddress: { label: "Home", street: "...", ... } }
+  ↓
+User creates order with: { name, phone: "8700925487", shippingAddress: { street: "...", ... } }
+  ↓
+createOrUpdateCustomer with selective updates:
+  - Normalize phone: "+918700925487"
+  - Only update provided fields: name, email (if provided)
+  - Normalize address: remove label, keep core fields
+  ↓
+Update succeeds with clean data
+  ↓
+Order creation succeeds ✅
+```
+
 ## Additional Notes
 
 - The fix maintains backward compatibility with existing customer data
 - No database migration needed - normalization happens at runtime
 - Cache updates are handled gracefully (won't fail if cache update fails)
 - All existing functionality preserved
+- Addresses with `label` fields in saved addresses are preserved, only `defaultAddress` is normalized during order creation
 
 ## Files Modified
 
 1. `src/lib/oms/customerUtils.ts`
-   - Line ~70: New customer creation phone normalization
-   - Line ~100: Existing customer update phone normalization
+   - Line ~130: New customer creation phone normalization
+   - Line ~185: **MAJOR FIX** - Existing customer update with selective field updates
+   - Address normalization to remove optional `label` field
    - Enhanced filtering logic for update data
+   - Added detailed logging for debugging
+
+## Files Created
+
+1. `test-existing-customer-order.js` - Diagnostic script to test existing customer order flow
 
 ## Related Files (No Changes Needed)
 

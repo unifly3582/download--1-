@@ -188,22 +188,37 @@ export async function createOrUpdateCustomer(
             // Normalize phone number format to ensure consistency
             const normalizedPhone = phone.startsWith('+91') ? phone : `+91${phone}`;
             
-            // Preserve essential fields from existing customer
+            // Build update data carefully - only include fields that are explicitly provided
             let updateData: any = { 
-                ...data,
-                phone: normalizedPhone // Ensure phone is preserved in normalized format
+                phone: normalizedPhone // Always ensure phone is in normalized format
             };
             
-            // Only add customerId if it exists in the existing customer
+            // Only update fields that are explicitly provided in data parameter
+            if (data.name !== undefined) updateData.name = data.name;
+            if (data.email !== undefined) updateData.email = data.email;
+            if (data.preferredLanguage !== undefined) updateData.preferredLanguage = data.preferredLanguage;
+            if (data.whatsappOptIn !== undefined) updateData.whatsappOptIn = data.whatsappOptIn;
+            
+            // Preserve customerId
             if (existingCustomer.customerId) {
                 updateData.customerId = existingCustomer.customerId;
             }
             
             // Handle address updates for existing customer
             if (shippingAddress) {
+                // Normalize the address - remove any label field if it exists in existing address
+                // This ensures consistency between order addresses and customer addresses
+                const normalizedAddress = {
+                    street: shippingAddress.street,
+                    city: shippingAddress.city,
+                    state: shippingAddress.state,
+                    zip: shippingAddress.zip,
+                    country: shippingAddress.country
+                };
+                
                 // Only update the default address for shipping purposes
                 // Do NOT automatically add to savedAddresses - that should be explicit user action
-                updateData.defaultAddress = shippingAddress;
+                updateData.defaultAddress = normalizedAddress;
                 console.log(`[OMS][CUSTOMER_UTILS] Updated default address for customer ${phone}`);
             }
            
@@ -217,6 +232,8 @@ export async function createOrUpdateCustomer(
                     return true;
                 })
             );
+            
+            console.log(`[OMS][CUSTOMER_UTILS] Applying update with fields: ${Object.keys(cleanUpdateData).join(', ')}`);
             
             // Apply the update, server handles the timestamp.
             await customerRef.update({
