@@ -93,7 +93,7 @@ async function testExistingCustomerOrder() {
     console.log(`     New has 'label': ${newAddressHasLabel ? '✅' : '❌'}`);
     
     if (existingAddressHasLabel && !newAddressHasLabel) {
-      console.log('   ⚠️  POTENTIAL ISSUE: Existing address has label, new one doesn't');
+      console.log('   WARNING: Existing address has label, new one does not');
     }
     
     // Issue 3: Check for extra fields in existing customer

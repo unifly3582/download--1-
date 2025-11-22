@@ -30,8 +30,18 @@ function addressesEqual(addr1: any, addr2: any): boolean {
 
 export async function getCustomerByPhone(phone: string): Promise<Customer | null> {
     try {
-        // Try method 1: Query by phone field (works for both old and new customers)
-        const querySnapshot = await db.collection("customers").where('phone', '==', phone).limit(1).get();
+        // Normalize phone number for consistent lookup
+        const normalizedPhone = phone.startsWith('+91') ? phone : `+91${phone}`;
+        console.log(`[OMS][CUSTOMER_UTILS] Looking up customer with phone: ${normalizedPhone} (original: ${phone})`);
+        
+        // Try method 1: Query by normalized phone field
+        let querySnapshot = await db.collection("customers").where('phone', '==', normalizedPhone).limit(1).get();
+        
+        // If not found with normalized phone, try with original phone (for backward compatibility)
+        if (querySnapshot.empty && phone !== normalizedPhone) {
+            console.log(`[OMS][CUSTOMER_UTILS] Not found with normalized phone, trying original: ${phone}`);
+            querySnapshot = await db.collection("customers").where('phone', '==', phone).limit(1).get();
+        }
         
         if (!querySnapshot.empty) {
             const doc = querySnapshot.docs[0];
@@ -49,9 +59,11 @@ export async function getCustomerByPhone(phone: string): Promise<Customer | null
 
             const validation = CustomerSchema.safeParse(dataForValidation);
             if (validation.success) {
+                console.log(`[OMS][CUSTOMER_UTILS] Found customer: ${validation.data.customerId}`);
                 return validation.data;
             } else {
                 console.error(`[OMS][CUSTOMER_UTILS] Invalid customer data for phone ${phone}:`, validation.error.flatten());
+                console.error(`[OMS][CUSTOMER_UTILS] Failed data:`, JSON.stringify(dataForValidation, null, 2));
             }
         }
         
