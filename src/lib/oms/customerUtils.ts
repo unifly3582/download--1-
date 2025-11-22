@@ -126,6 +126,10 @@ export async function createOrUpdateCustomer(
             console.log(`[OMS][CUSTOMER_UTILS] Creating new customer: ${phone}`);
             // Use the document ID as customerId for new customers
             const newCustomerId = customerRef.id;
+            
+            // Normalize phone number format to ensure consistency
+            const normalizedPhone = phone.startsWith('+91') ? phone : `+91${phone}`;
+            
             const defaults = {
                 totalOrders: 0, totalSpent: 0, trustScore: 50, avgOrderValue: 0,
                 refundsCount: 0, returnRate: 0, lifetimeValue: 0, savedAddresses: [],
@@ -148,7 +152,7 @@ export async function createOrUpdateCustomer(
                 ...data,
                 ...addressData,
                 customerId: newCustomerId,
-                phone: phone,
+                phone: normalizedPhone,
             };
 
             // Remove date fields before validation, as they are handled by the server.
@@ -181,10 +185,13 @@ export async function createOrUpdateCustomer(
             
             const existingCustomer = doc.data() as Customer;
             
+            // Normalize phone number format to ensure consistency
+            const normalizedPhone = phone.startsWith('+91') ? phone : `+91${phone}`;
+            
             // Preserve essential fields from existing customer
             let updateData: any = { 
                 ...data,
-                phone: phone // Ensure phone is preserved
+                phone: normalizedPhone // Ensure phone is preserved in normalized format
             };
             
             // Only add customerId if it exists in the existing customer
@@ -200,9 +207,15 @@ export async function createOrUpdateCustomer(
                 console.log(`[OMS][CUSTOMER_UTILS] Updated default address for customer ${phone}`);
             }
            
-            // Filter out undefined values before update
+            // Filter out undefined values and fields that shouldn't be updated
             const cleanUpdateData = Object.fromEntries(
-                Object.entries(updateData).filter(([_, value]) => value !== undefined)
+                Object.entries(updateData).filter(([key, value]) => {
+                    // Skip undefined values
+                    if (value === undefined) return false;
+                    // Skip fields that are managed separately
+                    if (['createdAt', 'updatedAt'].includes(key)) return false;
+                    return true;
+                })
             );
             
             // Apply the update, server handles the timestamp.
