@@ -15,8 +15,6 @@ import {
   Box,
   Video,
   AlertCircle,
-  UserCog,
-  ClipboardCheck,
 } from 'lucide-react';
 import {
   SidebarContent,
@@ -32,8 +30,6 @@ const navItems = [
   { href: '/orders', icon: ShoppingCart, label: 'Orders' },
   { href: '/issues', icon: AlertCircle, label: 'Issues' },
   { href: '/customers', icon: Users, label: 'Customers' },
-  { href: '/workers', icon: UserCog, label: 'Workers' },
-  { href: '/attendance', icon: ClipboardCheck, label: 'Attendance' },
   { href: '/coupons', icon: Ticket, label: 'Coupons' },
   { href: '/testimonials', icon: Video, label: 'Testimonials' },
   { href: '/tracking', icon: Truck, label: 'Tracking' },
