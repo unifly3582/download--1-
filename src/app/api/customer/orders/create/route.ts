@@ -13,11 +13,14 @@ import { v4 as uuidv4 } from 'uuid';
  */
 export async function POST(request: NextRequest) {
   try {
+    console.log('[CUSTOMER_ORDER] Starting order creation...');
     const body = await request.json();
+    console.log('[CUSTOMER_ORDER] Request body received:', JSON.stringify(body, null, 2));
     
     // Validate customer order data
     const parseResult = CustomerCreateOrderSchema.safeParse(body);
     if (!parseResult.success) {
+      console.error('[CUSTOMER_ORDER] Schema validation failed:', parseResult.error.flatten());
       return NextResponse.json({
         success: false,
         error: 'Invalid order data',
@@ -26,6 +29,7 @@ export async function POST(request: NextRequest) {
     }
     
     const orderData = parseResult.data;
+    console.log('[CUSTOMER_ORDER] Schema validation passed');
     
     // Only allow COD orders through this endpoint
     // Prepaid orders must go through /api/razorpay/create-order
@@ -37,14 +41,18 @@ export async function POST(request: NextRequest) {
     }
     
     // Create or get customer
+    console.log('[CUSTOMER_ORDER] Creating/updating customer...');
     const customer = await createOrUpdateCustomer(
       orderData.customerInfo.phone, 
       orderData.customerInfo,
       orderData.shippingAddress
     );
+    console.log('[CUSTOMER_ORDER] Customer created/updated:', customer.customerId);
     
     // Get product details and validate items
+    console.log('[CUSTOMER_ORDER] Validating and enriching items...');
     const itemsWithDetails = await validateAndEnrichItems(orderData.items);
+    console.log('[CUSTOMER_ORDER] Items validated:', itemsWithDetails.length);
     
     // Calculate order value
     const subtotal = itemsWithDetails.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
@@ -54,6 +62,7 @@ export async function POST(request: NextRequest) {
     let couponDetails = null;
     
     if (orderData.couponCode) {
+      console.log('[CUSTOMER_ORDER] Validating coupon:', orderData.couponCode);
       const couponValidation = await validateCoupon(
         orderData.couponCode,
         customer.customerId,
@@ -63,6 +72,7 @@ export async function POST(request: NextRequest) {
       );
       
       if (!couponValidation.isValid) {
+        console.log('[CUSTOMER_ORDER] Coupon validation failed:', couponValidation.error);
         return NextResponse.json({
           success: false,
           error: couponValidation.error
@@ -76,6 +86,7 @@ export async function POST(request: NextRequest) {
           discountAmount: discount,
           couponType: couponValidation.couponDetails.type
         };
+        console.log('[CUSTOMER_ORDER] Coupon applied, discount:', discount);
       }
     }
     
@@ -88,10 +99,14 @@ export async function POST(request: NextRequest) {
     const grandTotal = subtotal - discount - prepaidDiscount + taxes + shippingCharges + codCharges;
     
     // Get weight and dimensions
+    console.log('[CUSTOMER_ORDER] Calculating weight and dimensions...');
     const { weight, dimensions, needsManualVerification } = await getOrderWeightAndDimensions(itemsWithDetails);
+    console.log('[CUSTOMER_ORDER] Weight:', weight, 'Dimensions:', dimensions);
     
     // Generate order ID
+    console.log('[CUSTOMER_ORDER] Generating order ID...');
     const orderId = await generateOrderId();
+    console.log('[CUSTOMER_ORDER] Order ID generated:', orderId);
     
     // Create order object
     const newOrder = {
@@ -144,12 +159,14 @@ export async function POST(request: NextRequest) {
     };
     
     // Save order to database
+    console.log('[CUSTOMER_ORDER] Saving order to database...');
     const orderRef = db.collection('orders').doc(orderId);
     await orderRef.set({
       ...newOrder,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
     });
+    console.log('[CUSTOMER_ORDER] Order saved to database');
     
     // Record coupon usage if applicable
     if (couponDetails && orderData.couponCode) {
@@ -199,11 +216,19 @@ export async function POST(request: NextRequest) {
     }, { status: 201 });
     
   } catch (error: any) {
-    console.error('[CUSTOMER_ORDER] Error creating order:', error);
+    console.error('[CUSTOMER_ORDER] CRITICAL ERROR creating order:', error);
+    console.error('[CUSTOMER_ORDER] Error stack:', error.stack);
+    console.error('[CUSTOMER_ORDER] Error details:', {
+      message: error.message,
+      code: error.code,
+      name: error.name
+    });
     return NextResponse.json({
       success: false,
       error: 'Failed to create order',
-      details: error.message
+      details: error.message,
+      errorType: error.name,
+      errorCode: error.code
     }, { status: 500 });
   }
 }
@@ -215,24 +240,32 @@ async function validateAndEnrichItems(items: any[]) {
   const enrichedItems = [];
   
   for (const item of items) {
+    console.log('[CUSTOMER_ORDER] Validating item:', item.productId, item.sku);
+    
     // Get product details
     const productDoc = await db.collection('products').doc(item.productId).get();
     
     if (!productDoc.exists) {
+      console.error('[CUSTOMER_ORDER] Product not found:', item.productId);
       throw new Error(`Product not found: ${item.productId}`);
     }
     
     const product = productDoc.data()!;
+    console.log('[CUSTOMER_ORDER] Product found:', product.name);
     
     // Find variation or use default
     let variation = product.variations?.find((v: any) => v.sku === item.sku);
     
     if (!variation) {
+      console.error('[CUSTOMER_ORDER] Variation not found:', item.sku, 'Available variations:', product.variations?.map((v: any) => v.sku));
       throw new Error(`Product variation not found: ${item.sku}`);
     }
     
+    console.log('[CUSTOMER_ORDER] Variation found:', variation.name, 'Stock:', variation.stock);
+    
     // Check stock
     if (variation.stock < item.quantity) {
+      console.error('[CUSTOMER_ORDER] Insufficient stock:', product.name, 'Available:', variation.stock, 'Requested:', item.quantity);
       throw new Error(`Insufficient stock for ${product.name}. Available: ${variation.stock}, Requested: ${item.quantity}`);
     }
     

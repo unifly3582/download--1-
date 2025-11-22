@@ -13,11 +13,14 @@ import admin from 'firebase-admin';
  */
 export async function POST(request: NextRequest) {
   try {
+    console.log('[RAZORPAY_ORDER] Starting prepaid order creation...');
     const body = await request.json();
+    console.log('[RAZORPAY_ORDER] Request body received');
     
     // Validate customer order data
     const parseResult = CustomerCreateOrderSchema.safeParse(body);
     if (!parseResult.success) {
+      console.error('[RAZORPAY_ORDER] Schema validation failed:', parseResult.error.flatten());
       return NextResponse.json({
         success: false,
         error: 'Invalid order data',
@@ -26,6 +29,7 @@ export async function POST(request: NextRequest) {
     }
     
     const orderData = parseResult.data;
+    console.log('[RAZORPAY_ORDER] Schema validation passed');
     
     // Only allow prepaid orders through this endpoint
     if (orderData.paymentInfo.method !== 'Prepaid') {
@@ -36,14 +40,18 @@ export async function POST(request: NextRequest) {
     }
     
     // Create or get customer
+    console.log('[RAZORPAY_ORDER] Creating/updating customer...');
     const customer = await createOrUpdateCustomer(
       orderData.customerInfo.phone, 
       orderData.customerInfo,
       orderData.shippingAddress
     );
+    console.log('[RAZORPAY_ORDER] Customer created/updated:', customer.customerId);
     
     // Get product details and validate items
+    console.log('[RAZORPAY_ORDER] Validating and enriching items...');
     const itemsWithDetails = await validateAndEnrichItems(orderData.items);
+    console.log('[RAZORPAY_ORDER] Items validated:', itemsWithDetails.length);
     
     // Calculate order value
     const subtotal = itemsWithDetails.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
@@ -86,12 +94,17 @@ export async function POST(request: NextRequest) {
     const grandTotal = subtotal - discount - prepaidDiscount + taxes + shippingCharges;
     
     // Get weight and dimensions
+    console.log('[RAZORPAY_ORDER] Calculating weight and dimensions...');
     const { weight, dimensions, needsManualVerification } = await getOrderWeightAndDimensions(itemsWithDetails);
+    console.log('[RAZORPAY_ORDER] Weight:', weight, 'Dimensions:', dimensions);
     
     // Generate order ID
+    console.log('[RAZORPAY_ORDER] Generating order ID...');
     const orderId = await generateOrderId();
+    console.log('[RAZORPAY_ORDER] Order ID generated:', orderId);
     
     // Create Razorpay order
+    console.log('[RAZORPAY_ORDER] Creating Razorpay order for amount:', grandTotal);
     const razorpayResult = await createRazorpayOrder(
       grandTotal,
       orderId,
@@ -103,12 +116,15 @@ export async function POST(request: NextRequest) {
     );
     
     if (!razorpayResult.success) {
+      console.error('[RAZORPAY_ORDER] Razorpay order creation failed:', razorpayResult.error);
       return NextResponse.json({
         success: false,
         error: 'Failed to create payment order',
         details: razorpayResult.error
       }, { status: 500 });
     }
+    
+    console.log('[RAZORPAY_ORDER] Razorpay order created:', razorpayResult.razorpayOrderId);
     
     // Create pending order object (will be confirmed after payment)
     const pendingOrder = {
@@ -162,12 +178,14 @@ export async function POST(request: NextRequest) {
     };
     
     // Save pending order to database
+    console.log('[RAZORPAY_ORDER] Saving pending order to database...');
     const orderRef = db.collection('orders').doc(orderId);
     await orderRef.set({
       ...pendingOrder,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
     });
+    console.log('[RAZORPAY_ORDER] Pending order saved to database');
     
     console.log(`[RAZORPAY_ORDER] Pending order created: ${orderId}, Razorpay Order: ${razorpayResult.razorpayOrderId}`);
     
@@ -187,11 +205,19 @@ export async function POST(request: NextRequest) {
     }, { status: 201 });
     
   } catch (error: any) {
-    console.error('[RAZORPAY_ORDER] Error creating order:', error);
+    console.error('[RAZORPAY_ORDER] CRITICAL ERROR creating order:', error);
+    console.error('[RAZORPAY_ORDER] Error stack:', error.stack);
+    console.error('[RAZORPAY_ORDER] Error details:', {
+      message: error.message,
+      code: error.code,
+      name: error.name
+    });
     return NextResponse.json({
       success: false,
       error: 'Failed to create order',
-      details: error.message
+      details: error.message,
+      errorType: error.name,
+      errorCode: error.code
     }, { status: 500 });
   }
 }
@@ -203,20 +229,29 @@ async function validateAndEnrichItems(items: any[]) {
   const enrichedItems = [];
   
   for (const item of items) {
+    console.log('[RAZORPAY_ORDER] Validating item:', item.productId, item.sku);
+    
     const productDoc = await db.collection('products').doc(item.productId).get();
     
     if (!productDoc.exists) {
+      console.error('[RAZORPAY_ORDER] Product not found:', item.productId);
       throw new Error(`Product not found: ${item.productId}`);
     }
     
     const product = productDoc.data()!;
+    console.log('[RAZORPAY_ORDER] Product found:', product.name);
+    
     let variation = product.variations?.find((v: any) => v.sku === item.sku);
     
     if (!variation) {
+      console.error('[RAZORPAY_ORDER] Variation not found:', item.sku, 'Available variations:', product.variations?.map((v: any) => v.sku));
       throw new Error(`Product variation not found: ${item.sku}`);
     }
     
+    console.log('[RAZORPAY_ORDER] Variation found:', variation.name, 'Stock:', variation.stock);
+    
     if (variation.stock < item.quantity) {
+      console.error('[RAZORPAY_ORDER] Insufficient stock:', product.name, 'Available:', variation.stock, 'Requested:', item.quantity);
       throw new Error(`Insufficient stock for ${product.name}. Available: ${variation.stock}, Requested: ${item.quantity}`);
     }
     
