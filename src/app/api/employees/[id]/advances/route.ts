@@ -4,11 +4,12 @@ import admin from 'firebase-admin';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const snapshot = await db.collection('advances')
-      .where('employeeId', '==', params.id)
+      .where('employeeId', '==', id)
       .orderBy('dateGiven', 'desc')
       .limit(50)
       .get();
@@ -30,13 +31,14 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const data = await request.json();
 
     await db.collection('advances').add({
-      employeeId: params.id,
+      employeeId: id,
       ...data,
       amountRepaid: 0,
       amountRemaining: data.amount,
