@@ -50,7 +50,7 @@ export async function createDelhiveryShipment(
       state: String(state),
       country: "India",
       phone: sanitizedPhone,
-      orderid: String(orderId),
+      order: String(orderId), // Fixed: Changed from 'orderid' to 'order' per Delhivery docs
       payment_mode: String(orderData.paymentInfo?.method || "Prepaid"),
       products_desc: String(orderData.items.map(i => i.productName).join(", ")),
       hsn_code: String(orderData.items[0]?.hsnCode || "000000"),
