@@ -121,8 +121,10 @@ export async function POST(request: NextRequest) {
       ...(couponDetails && { couponDetails }),
       
       customerInfo: {
-        ...orderData.customerInfo,
         customerId: customer.customerId,
+        name: orderData.customerInfo.name,
+        phone: orderData.customerInfo.phone,
+        ...(orderData.customerInfo.email && { email: orderData.customerInfo.email }),
       },
       
       shippingAddress: orderData.shippingAddress,

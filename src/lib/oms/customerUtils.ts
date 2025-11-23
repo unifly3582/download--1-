@@ -211,10 +211,8 @@ export async function createOrUpdateCustomer(
             if (data.preferredLanguage !== undefined) updateData.preferredLanguage = data.preferredLanguage;
             if (data.whatsappOptIn !== undefined) updateData.whatsappOptIn = data.whatsappOptIn;
             
-            // Preserve customerId
-            if (existingCustomer.customerId) {
-                updateData.customerId = existingCustomer.customerId;
-            }
+            // Preserve customerId - use existing customerId or fallback to document ID
+            updateData.customerId = existingCustomer.customerId || customerRef.id;
             
             // Handle address updates for existing customer
             if (shippingAddress) {
