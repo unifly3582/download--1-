@@ -73,6 +73,13 @@ export async function GET(request: NextRequest) {
       const data = doc.data();
       return {
         ...data,
+        // Add default values for missing fields
+        customerFacingStatus: data.customerFacingStatus || data.internalStatus || 'pending',
+        pricingInfo: {
+          ...data.pricingInfo,
+          discount: data.pricingInfo?.discount ?? 0,
+          prepaidDiscount: data.pricingInfo?.prepaidDiscount ?? 0
+        },
         createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
         updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
         approval: {
@@ -83,7 +90,13 @@ export async function GET(request: NextRequest) {
     });
     
     const validOrders = orders
-      .map((order: any) => OrderSchema.safeParse(order))
+      .map((order: any) => {
+        const result = OrderSchema.safeParse(order);
+        if (!result.success) {
+          console.warn(`[CUSTOMER_ORDERS_API] Order ${order.orderId} failed validation:`, result.error.flatten());
+        }
+        return result;
+      })
       .filter((result: any) => result.success)
       .map((result: any) => result.data!);
     
