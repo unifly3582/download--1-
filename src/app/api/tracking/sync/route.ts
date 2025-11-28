@@ -127,7 +127,23 @@ async function processTrackingResponse(trackingData: any, orders: any[]) {
     if (!orderDoc) continue;
     
     const currentOrder = orderDoc.data();
-    const newStatus = mapDelhiveryStatusToInternal(shipment.Status.Status);
+    
+    // IMPORTANT: Check for RTO (Return to Origin) first
+    // Delhivery uses StatusType="RT" and ReverseInTransit=true for RTO orders
+    const isRTO = shipment.Status.StatusType === 'RT' || shipment.ReverseInTransit === true;
+    
+    let newStatus;
+    if (isRTO) {
+      // RTO detected - check if it's completed or in progress
+      if (shipment.ReturnedDate) {
+        newStatus = 'returned';  // RTO completed
+      } else {
+        newStatus = 'return_initiated';  // RTO in progress
+      }
+    } else {
+      // Normal delivery flow
+      newStatus = mapDelhiveryStatusToInternal(shipment.Status.Status);
+    }
     
     // Prepare update data
     const updateData: any = {
@@ -137,6 +153,15 @@ async function processTrackingResponse(trackingData: any, orders: any[]) {
       'shipmentInfo.trackingInstructions': shipment.Status.Instructions,
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
     };
+    
+    // Store RTO information if applicable
+    if (isRTO) {
+      updateData['shipmentInfo.isRTO'] = true;
+      updateData['shipmentInfo.rtoStartedDate'] = shipment.RTOStartedDate;
+      if (shipment.ReturnedDate) {
+        updateData['shipmentInfo.returnedDate'] = shipment.ReturnedDate;
+      }
+    }
     
     // Update internal status if changed
     if (newStatus !== currentOrder.internalStatus) {
@@ -167,8 +192,10 @@ async function processTrackingResponse(trackingData: any, orders: any[]) {
     let notificationStatus = newStatus;
     
     // Check for "out for delivery" status
-    const isOutForDelivery = delhiveryStatus?.toLowerCase().includes('out for delivery') || 
-                             delhiveryStatus?.toLowerCase().includes('out-for-delivery');
+    // Delhivery uses "Dispatched" or "Out for Delivery" to indicate out for delivery
+    const statusLower = (delhiveryStatus || '').toLowerCase().replace(/[_\s-]/g, '');
+    const isOutForDelivery = statusLower.includes('outfordelivery') || 
+                             statusLower.includes('dispatched');
     
     if (isOutForDelivery) {
       notificationStatus = 'out_for_delivery';
@@ -219,7 +246,7 @@ function mapDelhiveryStatusToInternal(delhiveryStatus: string): string {
     'Not Picked': 'shipped',
     'In Transit': 'in_transit',
     'Pending': 'pending',
-    'Dispatched': 'in_transit',
+    'Dispatched': 'in_transit',  // NOTE: "Dispatched" means "out for delivery" in Delhivery
     'Out for Delivery': 'in_transit',
     'Out-for-Delivery': 'in_transit',
     'Delivered': 'delivered',

@@ -146,6 +146,13 @@ export async function createShipment(orderId: string, courier: string, manualAwb
       } as Order;
       
       await notificationService.sendOrderShippedNotification(orderForNotification);
+      
+      // Mark notification as sent to prevent duplicates from tracking sync
+      await orderRef.update({
+        'notificationHistory.lastNotifiedStatus': 'shipped',
+        'notificationHistory.lastNotifiedAt': new Date().toISOString()
+      });
+      
       logger.info('WhatsApp shipped notification sent', { orderId });
     } catch (notificationError) {
       logger.error('WhatsApp notification failed', notificationError, { orderId });
