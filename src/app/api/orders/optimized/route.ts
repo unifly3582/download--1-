@@ -151,17 +151,79 @@ async function getOptimizedOrdersHandler(request: NextRequest, context: any, aut
     }
 
     const orders: any[] = [];
+    
+    // Fetch customer data for all orders in batch
+    const customerPhones = new Set<string>();
+    const orderDocs: any[] = [];
     snapshot.forEach(doc => {
       const data = doc.data();
-      
+      orderDocs.push({ id: doc.id, data });
+      if (data.customerInfo?.phone) {
+        customerPhones.add(data.customerInfo.phone);
+      }
+    });
+    
+    // Batch fetch customer data
+    const customerDataMap = new Map<string, any>();
+    if (customerPhones.size > 0) {
+      try {
+        const customerPromises = Array.from(customerPhones).map(async (phone) => {
+          try {
+            // Try to find customer by phone query first
+            const customerQuery = await db.collection('customers')
+              .where('phone', '==', phone)
+              .limit(1)
+              .get();
+            
+            if (!customerQuery.empty) {
+              const customerDoc = customerQuery.docs[0];
+              return { phone, data: customerDoc.data() };
+            }
+            
+            // Fallback: try direct document lookup
+            const customerDoc = await db.collection('customers').doc(phone).get();
+            if (customerDoc.exists) {
+              return { phone, data: customerDoc.data() };
+            }
+            
+            return { phone, data: null };
+          } catch (err) {
+            console.warn(`[orders API] Failed to fetch customer ${phone}:`, err);
+            return { phone, data: null };
+          }
+        });
+        
+        const customerResults = await Promise.all(customerPromises);
+        customerResults.forEach(result => {
+          if (result.data) {
+            customerDataMap.set(result.phone, result.data);
+          }
+        });
+      } catch (error) {
+        console.warn('[orders API] Failed to batch fetch customers:', error);
+      }
+    }
+    
+    // Process orders with customer data
+    orderDocs.forEach(({ id, data }) => {
       // For now, return all data to ensure functionality works
       // Field selection can be re-enabled later for further optimization
       let orderData: any = data;
+      
+      // Add customer metadata if available
+      const customerData = customerDataMap.get(data.customerInfo?.phone);
+      if (customerData) {
+        orderData.customerMetadata = {
+          totalOrders: customerData.totalOrders || 0,
+          loyaltyTier: customerData.loyaltyTier || 'new',
+          trustScore: customerData.trustScore || 50
+        };
+      }
 
       // Serialize dates
       const dataWithSerializableDates = {
         ...orderData,
-        id: doc.id,
+        id,
         createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : data.createdAt,
         updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : data.updatedAt,
         approval: { 

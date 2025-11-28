@@ -732,6 +732,12 @@ export default function OrdersPage() {
     return status === 'Completed' ? 'default' : 'secondary';
   }
 
+  // Check if customer is new (first order or no delivered orders yet)
+  const isNewCustomer = (order: OrderDisplay): boolean => {
+    const totalOrders = (order as any).customerMetadata?.totalOrders;
+    return totalOrders !== undefined && totalOrders <= 1;
+  };
+
   // Priority calculation for visual hierarchy
   const getOrderPriority = (order: OrderDisplay): 'urgent' | 'high' | 'normal' => {
     // Urgent: High value COD orders or orders with issues
@@ -745,11 +751,14 @@ export default function OrdersPage() {
     return 'normal';
   };
 
-  const getPriorityColor = (priority: 'urgent' | 'high' | 'normal'): string => {
+  const getPriorityColor = (priority: 'urgent' | 'high' | 'normal', isNew: boolean): string => {
+    // New customer gets subtle blue background (doesn't override priority borders)
+    const newCustomerBg = isNew ? 'bg-blue-50/40' : '';
+    
     switch (priority) {
-      case 'urgent': return 'border-l-4 border-l-red-500 bg-red-50/50';
-      case 'high': return 'border-l-4 border-l-orange-500 bg-orange-50/50';
-      default: return '';
+      case 'urgent': return `border-l-4 border-l-red-500 bg-red-50/50 ${newCustomerBg}`;
+      case 'high': return `border-l-4 border-l-orange-500 bg-orange-50/50 ${newCustomerBg}`;
+      default: return newCustomerBg;
     }
   };
 
@@ -762,7 +771,8 @@ export default function OrdersPage() {
   // Render single order row (reusable for both virtual and regular tables)
   const renderOrderRow = (order: OrderDisplay) => {
     const priority = getOrderPriority(order);
-    const priorityClass = getPriorityColor(priority);
+    const isNew = isNewCustomer(order);
+    const priorityClass = getPriorityColor(priority, isNew);
 
     return (
       <TableRow key={order.id} className={priorityClass}>
@@ -806,7 +816,14 @@ export default function OrdersPage() {
         {/* Customer Info */}
         <TableCell>
           <div className="space-y-1">
-            <div className="font-medium">{order.customerInfo.name}</div>
+            <div className="flex items-center gap-2">
+              <div className="font-medium">{order.customerInfo.name}</div>
+              {isNew && (
+                <Badge variant="outline" className="text-xs bg-blue-100 text-blue-700 border-blue-300">
+                  🆕 New
+                </Badge>
+              )}
+            </div>
             <div className="text-sm text-muted-foreground">{order.customerInfo.phone}</div>
             {order.customerInfo.email && (
               <div className="text-xs text-muted-foreground">{order.customerInfo.email}</div>
@@ -1524,7 +1541,7 @@ export default function OrdersPage() {
 
             {/* Priority Legend */}
             <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2 border-t">
-              <span className="font-medium">Priority Indicators:</span>
+              <span className="font-medium">Visual Indicators:</span>
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 border-l-4 border-l-red-500 bg-red-50"></div>
                 <span>Urgent (High value COD / Issues)</span>
@@ -1532,6 +1549,10 @@ export default function OrdersPage() {
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 border-l-4 border-l-orange-500 bg-orange-50"></div>
                 <span>High Value (₹3000+)</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 bg-blue-50 border border-blue-200"></div>
+                <span>🆕 New Customer (0-1 orders)</span>
               </div>
             </div>
           </div>

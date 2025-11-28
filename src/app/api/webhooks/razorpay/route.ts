@@ -147,6 +147,26 @@ async function handleOrderPaid(event: any) {
       }
     }
     
+    // Trigger auto-approval for eligible orders
+    if (!needsManualVerification) {
+      try {
+        const { runAutoApproval } = await import('@/lib/oms/autoApproval');
+        const updatedOrderForApproval = { 
+          ...orderData, 
+          paymentInfo: { ...orderData?.paymentInfo, status: 'Completed', transactionId: paymentId },
+          internalStatus: 'created_pending',
+          customerFacingStatus: 'confirmed'
+        } as any;
+        // Run auto-approval asynchronously
+        runAutoApproval(updatedOrderForApproval, orderId).catch(err => {
+          console.error(`[RAZORPAY_WEBHOOK] Auto-approval failed for ${orderId}:`, err);
+        });
+        console.log(`[RAZORPAY_WEBHOOK] Auto-approval triggered for ${orderId}`);
+      } catch (autoApprovalError) {
+        console.error(`[RAZORPAY_WEBHOOK] Auto-approval import failed for ${orderId}:`, autoApprovalError);
+      }
+    }
+    
     // Send WhatsApp notification
     try {
       const { createNotificationService } = await import('@/lib/oms/notifications');

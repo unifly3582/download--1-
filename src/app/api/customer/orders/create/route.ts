@@ -187,6 +187,20 @@ export async function POST(request: NextRequest) {
       }
     }
     
+    // Trigger auto-approval for eligible orders
+    if (newOrder.internalStatus === 'created_pending') {
+      try {
+        const { runAutoApproval } = await import('@/lib/oms/autoApproval');
+        // Run auto-approval asynchronously (don't wait for it)
+        runAutoApproval(newOrder as any, orderId).catch(err => {
+          console.error(`[CUSTOMER_ORDER] Auto-approval failed for ${orderId}:`, err);
+        });
+        console.log(`[CUSTOMER_ORDER] Auto-approval triggered for ${orderId}`);
+      } catch (autoApprovalError) {
+        console.error(`[CUSTOMER_ORDER] Auto-approval import failed for ${orderId}:`, autoApprovalError);
+      }
+    }
+    
     // Trigger WhatsApp notification immediately on order creation
     try {
       const { createNotificationService } = await import('@/lib/oms/notifications');
