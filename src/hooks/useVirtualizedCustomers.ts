@@ -10,6 +10,9 @@ interface UseVirtualizedCustomersProps {
     segment: string;
     region: string;
   };
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  minOrders?: number | null;
 }
 
 interface CustomerPage {
@@ -21,7 +24,10 @@ interface CustomerPage {
 export function useVirtualizedCustomers({
   pageSize = 25,
   searchTerm = '',
-  filters = { tier: 'all', segment: 'all', region: 'all' }
+  filters = { tier: 'all', segment: 'all', region: 'all' },
+  sortBy = 'createdAt',
+  sortOrder = 'desc',
+  minOrders = null
 }: UseVirtualizedCustomersProps) {
   const [pages, setPages] = useState<CustomerPage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -47,6 +53,9 @@ export function useVirtualizedCustomers({
         ...(filters.tier !== 'all' && { tier: filters.tier }),
         ...(filters.segment !== 'all' && { segment: filters.segment }),
         ...(filters.region !== 'all' && { region: filters.region }),
+        ...(minOrders !== null && { minOrders: minOrders.toString() }),
+        sortBy,
+        sortOrder,
       });
 
       const result = await authenticatedFetch(`/api/customers/paginated?${params}`);
@@ -63,7 +72,7 @@ export function useVirtualizedCustomers({
     } finally {
       setIsLoading(false);
     }
-  }, [pageSize, searchTerm, filters, isLoading]);
+  }, [pageSize, searchTerm, filters, sortBy, sortOrder, minOrders, isLoading]);
 
   const loadMore = useCallback(() => {
     if (!hasMore || isLoading) return;
@@ -83,7 +92,7 @@ export function useVirtualizedCustomers({
   // Reset and load first page when dependencies change
   useEffect(() => {
     refresh();
-  }, [searchTerm, filters.tier, filters.segment, filters.region]);
+  }, [searchTerm, filters.tier, filters.segment, filters.region, sortBy, sortOrder, minOrders]);
 
   return {
     customers,

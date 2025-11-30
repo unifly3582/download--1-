@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, MoreHorizontal, Loader2, ChevronDown, Edit, Search } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Loader2, ChevronDown, Edit, Search, ArrowUpDown, Filter, X } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { authenticatedFetch } from '@/lib/api/utils';
 import { CustomerEditDialog } from './customer-edit-dialog';
@@ -36,6 +36,9 @@ export default function OptimizedCustomersPage() {
   const [searchInput, setSearchInput] = useState('');
   const [activeSearchTerm, setActiveSearchTerm] = useState('');
   const [filters, setFilters] = useState({ tier: 'all', segment: 'all', region: 'all' });
+  const [sortBy, setSortBy] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [minOrders, setMinOrders] = useState<number | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isProfileLoading, setIsProfileLoading] = useState(false);
   const [viewingCustomer, setViewingCustomer] = useState<CustomerProfile | null>(null);
@@ -53,7 +56,10 @@ export default function OptimizedCustomersPage() {
   } = useVirtualizedCustomers({
     pageSize: 25,
     searchTerm: activeSearchTerm,
-    filters
+    filters,
+    sortBy,
+    sortOrder,
+    minOrders
   });
 
   const handleSearch = useCallback(() => {
@@ -75,6 +81,14 @@ export default function OptimizedCustomersPage() {
     setSearchInput(''); // Clear search input when filtering
     setActiveSearchTerm(''); // Clear active search
     setFilters(prev => ({ ...prev, [filterType]: value }));
+  }, []);
+
+  const handleSortChange = useCallback((value: string) => {
+    setSortBy(value);
+  }, []);
+
+  const toggleSortOrder = useCallback(() => {
+    setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
   }, []);
 
   const handleOpenProfileDialog = useCallback(async (customer: Customer) => {
@@ -116,6 +130,21 @@ export default function OptimizedCustomersPage() {
     }
   }, [isLoading, hasMore, loadMore]);
 
+  // Helper to format date
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'Never';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
+    return `${Math.floor(diffDays / 365)} years ago`;
+  };
+
   // Memoize table rows to prevent unnecessary re-renders
   const customerRows = useMemo(() => {
     return customers.map((customer) => (
@@ -132,16 +161,16 @@ export default function OptimizedCustomersPage() {
           </div>
         </TableCell>
         <TableCell>
-          <div className="flex flex-wrap gap-1">
-            {customer.tags?.slice(0, 2).map(tag => (
-              <Badge key={tag} variant="outline">{tag}</Badge>
-            ))}
-            {customer.tags && customer.tags.length > 2 && (
-              <Badge variant="outline">+{customer.tags.length - 2}</Badge>
-            )}
+          <div className="text-sm">
+            <div className="font-medium">₹{customer.totalSpent?.toLocaleString() || 0}</div>
+            <div className="text-muted-foreground">{customer.totalOrders || 0} orders</div>
           </div>
         </TableCell>
-        <TableCell>{customer.region}</TableCell>
+        <TableCell>
+          <div className="text-sm text-muted-foreground">
+            {formatDate(customer.lastOrderAt)}
+          </div>
+        </TableCell>
         <TableCell className="text-right">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -251,6 +280,52 @@ export default function OptimizedCustomersPage() {
                 <SelectItem value="At Risk">At Risk</SelectItem>
               </SelectContent>
             </Select>
+            <div className="flex items-center gap-2 border-l pl-2">
+              <Select 
+                value={sortBy} 
+                onValueChange={handleSortChange}
+              >
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="createdAt">Newest First</SelectItem>
+                  <SelectItem value="totalSpent">Total Spent</SelectItem>
+                  <SelectItem value="totalOrders">Total Orders</SelectItem>
+                  <SelectItem value="lastOrderAt">Last Order Date</SelectItem>
+                  <SelectItem value="name">Name</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button 
+                variant="outline" 
+                size="icon"
+                onClick={toggleSortOrder}
+                title={sortOrder === 'desc' ? 'Sort Descending' : 'Sort Ascending'}
+              >
+                <ArrowUpDown className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="flex items-center gap-2 border-l pl-2">
+              {minOrders === null ? (
+                <Button 
+                  variant="outline"
+                  onClick={() => setMinOrders(3)}
+                  className="flex items-center gap-2"
+                >
+                  <Filter className="h-4 w-4" />
+                  3+ Orders
+                </Button>
+              ) : (
+                <Button 
+                  variant="default"
+                  onClick={() => setMinOrders(null)}
+                  className="flex items-center gap-2"
+                >
+                  <X className="h-4 w-4" />
+                  {minOrders}+ Orders
+                </Button>
+              )}
+            </div>
             <Button 
               variant="outline" 
               onClick={refresh}
@@ -267,8 +342,8 @@ export default function OptimizedCustomersPage() {
                 <TableHead>Name</TableHead>
                 <TableHead>Contact</TableHead>
                 <TableHead>Profile</TableHead>
-                <TableHead>Tags</TableHead>
-                <TableHead>Region</TableHead>
+                <TableHead>Value</TableHead>
+                <TableHead>Last Order</TableHead>
                 <TableHead><span className="sr-only">Actions</span></TableHead>
               </TableRow>
             </TableHeader>

@@ -15,6 +15,9 @@ async function getCustomersHandler(request: NextRequest) {
   const segment = searchParams.get("segment");
   const tier = searchParams.get("tier");
   const region = searchParams.get("region");
+  const sortBy = searchParams.get("sortBy") || "createdAt";
+  const sortOrder = searchParams.get("sortOrder") || "desc";
+  const minOrders = searchParams.get("minOrders") ? parseInt(searchParams.get("minOrders")!) : null;
 
   // This helper function ensures consistent data validation and transformation
   const processAndValidate = (doc: firestore.QueryDocumentSnapshot | firestore.DocumentSnapshot): Customer | null => {
@@ -157,12 +160,29 @@ async function getCustomersHandler(request: NextRequest) {
       if (segment && segment !== 'all') query = query.where("customerSegment", "==", segment);
       if (tier && tier !== 'all') query = query.where("loyaltyTier", "==", tier);
       if (region && region !== 'all') query = query.where("region", "==", region);
-
-      const snapshot = await query.orderBy('createdAt', 'desc').limit(50).get();
+      
+      // Apply sorting
+      const validSortFields = ['createdAt', 'totalSpent', 'totalOrders', 'lastOrderAt', 'name'];
+      const sortField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
+      const direction = sortOrder === 'asc' ? 'asc' : 'desc';
+      
+      // When filtering by minOrders, fetch more and filter client-side
+      const fetchLimit = (minOrders !== null && minOrders > 0) ? 150 : 50;
+      
+      query = query.orderBy(sortField, direction);
+      
+      const snapshot = await query.limit(fetchLimit).get();
       snapshot.forEach(doc => {
           const validatedCustomer = processAndValidate(doc);
           if (validatedCustomer) {
-              customers.push(validatedCustomer);
+              // Apply client-side minOrders filter if needed
+              if (minOrders !== null && minOrders > 0) {
+                  if ((validatedCustomer.totalOrders || 0) >= minOrders && customers.length < 50) {
+                      customers.push(validatedCustomer);
+                  }
+              } else {
+                  customers.push(validatedCustomer);
+              }
           }
       });
     }

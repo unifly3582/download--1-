@@ -174,6 +174,18 @@ async function processTrackingResponse(trackingData: any, orders: any[]) {
         updateData.needsTracking = false;
         updateData['shipmentInfo.trackingDisabledReason'] = `Order ${newStatus}`;
       }
+      
+      // Update customer stats when order is delivered
+      if (newStatus === 'delivered') {
+        try {
+          const { updateCustomerAfterOrder } = await import('@/lib/oms/customerIntelligence');
+          await updateCustomerAfterOrder(currentOrder.orderId, 'delivered');
+          console.log(`[TRACKING_SYNC] Customer stats updated for order ${currentOrder.orderId}`);
+        } catch (customerUpdateError: any) {
+          console.error(`[TRACKING_SYNC] Failed to update customer stats for ${currentOrder.orderId}:`, customerUpdateError);
+          // Don't fail the tracking update if customer stats update fails
+        }
+      }
     }
     
     // Send WhatsApp notification for key status changes (with duplicate prevention)

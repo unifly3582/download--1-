@@ -14,6 +14,9 @@ async function getPaginatedCustomersHandler(request: NextRequest) {
   const region = searchParams.get('region');
   const limit = parseInt(searchParams.get('limit') || '25');
   const cursor = searchParams.get('cursor');
+  const sortBy = searchParams.get('sortBy') || 'createdAt';
+  const sortOrder = searchParams.get('sortOrder') || 'desc';
+  const minOrders = searchParams.get('minOrders') ? parseInt(searchParams.get('minOrders')!) : null;
 
   const processAndValidate = (doc: admin.firestore.QueryDocumentSnapshot): Customer | null => {
     const data = doc.data();
@@ -53,7 +56,11 @@ async function getPaginatedCustomersHandler(request: NextRequest) {
       } else {
         // Fallback to Firestore search (limited results)
         const customersRef = db.collection('customers');
-        let query = customersRef.orderBy('createdAt', 'desc').limit(limit);
+        const validSortFields = ['createdAt', 'totalSpent', 'totalOrders', 'lastOrderAt', 'name'];
+        const sortField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
+        const direction = sortOrder === 'asc' ? 'asc' : 'desc';
+        
+        let query = customersRef.orderBy(sortField, direction).limit(limit);
         
         if (cursor) {
           try {
@@ -124,9 +131,17 @@ async function getPaginatedCustomersHandler(request: NextRequest) {
       if (region && region !== 'all') {
         query = query.where('region', '==', region);
       }
-
+      
       // Apply ordering and pagination
-      query = query.orderBy('createdAt', 'desc').limit(limit);
+      const validSortFields = ['createdAt', 'totalSpent', 'totalOrders', 'lastOrderAt', 'name'];
+      const sortField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
+      const direction = sortOrder === 'asc' ? 'asc' : 'desc';
+      
+      // When filtering by minOrders, we need to fetch more and filter client-side
+      // to avoid complex composite index requirements
+      const fetchLimit = (minOrders !== null && minOrders > 0) ? limit * 3 : limit;
+      
+      query = query.orderBy(sortField, direction).limit(fetchLimit);
 
       if (cursor) {
         try {
@@ -152,12 +167,20 @@ async function getPaginatedCustomersHandler(request: NextRequest) {
       snapshot.forEach(doc => {
         const validatedCustomer = processAndValidate(doc);
         if (validatedCustomer) {
-          customers.push(validatedCustomer);
-          lastDoc = doc;
+          // Apply client-side minOrders filter if needed
+          if (minOrders !== null && minOrders > 0) {
+            if ((validatedCustomer.totalOrders || 0) >= minOrders && customers.length < limit) {
+              customers.push(validatedCustomer);
+              lastDoc = doc;
+            }
+          } else {
+            customers.push(validatedCustomer);
+            lastDoc = doc;
+          }
         }
       });
 
-      hasMore = snapshot.size === limit;
+      hasMore = snapshot.size === fetchLimit && customers.length === limit;
       nextCursor = hasMore && lastDoc ? lastDoc.id : undefined;
     }
 

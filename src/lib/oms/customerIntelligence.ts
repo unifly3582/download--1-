@@ -68,8 +68,21 @@ export async function updateCustomerAfterOrder(orderId: string, newStatus: strin
     // Recalculate loyalty tier after any potential change in order count
     await updateLoyaltyTier(phone);
 
-    // Update timestamps
-    await db.collection("customers").doc(phone).update({
+    // Update timestamps - find correct customer document reference
+    const customerIdDoc = await db.collection("customers").doc(customer.customerId).get();
+    const phoneDoc = await db.collection("customers").doc(phone).get();
+    
+    let customerRef;
+    if (customerIdDoc.exists) {
+      customerRef = db.collection("customers").doc(customer.customerId);
+    } else if (phoneDoc.exists) {
+      customerRef = db.collection("customers").doc(phone);
+    } else {
+      console.error(`[customerIntelligence] Could not find customer document for ${phone}`);
+      return;
+    }
+    
+    await customerRef.update({
       lastOrderAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
