@@ -10,11 +10,12 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, MoreHorizontal, Loader2, ChevronDown, Edit, Search, ArrowUpDown, Filter, X } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Loader2, ChevronDown, Edit, Search, ArrowUpDown, Filter, X, Download } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { authenticatedFetch } from '@/lib/api/utils';
 import { CustomerEditDialog } from './customer-edit-dialog';
 import { CustomerProfileDialog } from './customer-profile-dialog';
+import { CustomerDownloadDialog } from '@/components/customer-download-dialog';
 
 interface CustomerProfile extends Customer {
   recentOrders?: Array<{
@@ -44,6 +45,7 @@ export default function OptimizedCustomersPage() {
   const [viewingCustomer, setViewingCustomer] = useState<CustomerProfile | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | undefined>(undefined);
+  const [isCustomerDownloadOpen, setIsCustomerDownloadOpen] = useState(false);
 
   const {
     customers,
@@ -218,6 +220,9 @@ export default function OptimizedCustomersPage() {
               <span className="text-sm text-muted-foreground">
                 {totalLoaded} customers loaded
               </span>
+              <Button variant="outline" onClick={() => setIsCustomerDownloadOpen(true)}>
+                <Download className="mr-2 h-4 w-4" /> Download Customers
+              </Button>
               <Button onClick={() => handleOpenEditDialog()}>
                 <PlusCircle className="mr-2 h-4 w-4" /> Add Customer
               </Button>
@@ -400,6 +405,12 @@ export default function OptimizedCustomersPage() {
           refresh();
           setIsEditOpen(false);
         }}
+      />
+
+      {/* Customer Download Dialog */}
+      <CustomerDownloadDialog
+        isOpen={isCustomerDownloadOpen}
+        onOpenChange={setIsCustomerDownloadOpen}
       />
     </div>
   );

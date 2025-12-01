@@ -1207,7 +1207,7 @@ export default function OrdersPage() {
           </Button>
           <Button variant="outline" size="sm" onClick={handleExport}>
             <Download className="mr-2 h-4 w-4" />
-            Export {selectedOrders.size > 0 ? `(${selectedOrders.size})` : ''}
+            Export Orders {selectedOrders.size > 0 ? `(${selectedOrders.size})` : ''}
           </Button>
           <Button
             variant="outline"
