@@ -6,6 +6,8 @@ export interface WhatsAppTemplate {
   language: string;
   components: Array<{
     type: string;
+    sub_type?: string;
+    index?: number;
     parameters?: Array<{
       type: string;
       text?: string;
