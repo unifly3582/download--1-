@@ -184,7 +184,9 @@ export function CreateOrderDialog({ isOpen, onOpenChange, onOrderCreated }: Crea
     try {
       // Use the phone-specific endpoint since customers are stored with phone as document ID
       const formattedPhone = `+91${phoneNumber}`;
-      const result = await authenticatedFetch(`/api/customers/${formattedPhone}`);
+      // URL encode the phone number (+ becomes %2B)
+      const encodedPhone = encodeURIComponent(formattedPhone);
+      const result = await authenticatedFetch(`/api/customers/${encodedPhone}`);
 
       if (result.success && result.data) {
         const customer = result.data;

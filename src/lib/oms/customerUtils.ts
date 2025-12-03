@@ -57,13 +57,28 @@ export async function getCustomerByPhone(phone: string): Promise<Customer | null
             if (!data) return null;
 
             // Handle mixed storage patterns
-            const dataForValidation = {
+            const dataForValidation: any = {
                 ...data,
                 // Use existing customerId if present, otherwise use document ID
                 customerId: data.customerId || doc.id,
-                createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : undefined,
-                updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : undefined,
             };
+            
+            // Only add timestamp fields if they exist (avoid undefined)
+            if (data.createdAt) {
+                dataForValidation.createdAt = data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : data.createdAt;
+            }
+            if (data.updatedAt) {
+                dataForValidation.updatedAt = data.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : data.updatedAt;
+            }
+            if (data.lastOrderAt) {
+                dataForValidation.lastOrderAt = data.lastOrderAt?.toDate ? data.lastOrderAt.toDate().toISOString() : data.lastOrderAt;
+            }
+            if (data.lastInteractionAt) {
+                dataForValidation.lastInteractionAt = data.lastInteractionAt?.toDate ? data.lastInteractionAt.toDate().toISOString() : data.lastInteractionAt;
+            }
+            if (data.inactiveSince) {
+                dataForValidation.inactiveSince = data.inactiveSince?.toDate ? data.inactiveSince.toDate().toISOString() : data.inactiveSince;
+            }
 
             const validation = CustomerSchema.safeParse(dataForValidation);
             if (validation.success) {
@@ -72,6 +87,8 @@ export async function getCustomerByPhone(phone: string): Promise<Customer | null
             } else {
                 console.error(`[OMS][CUSTOMER_UTILS] Invalid customer data for phone ${phone}:`, validation.error.flatten());
                 console.error(`[OMS][CUSTOMER_UTILS] Failed data:`, JSON.stringify(dataForValidation, null, 2));
+                // Return null so the function continues to try legacy lookup
+                return null;
             }
         }
         
@@ -81,12 +98,27 @@ export async function getCustomerByPhone(phone: string): Promise<Customer | null
             if (phoneDoc.exists) {
                 const data = phoneDoc.data();
                 if (data) {
-                    const dataForValidation = {
+                    const dataForValidation: any = {
                         ...data,
                         customerId: data.customerId || phoneDoc.id,
-                        createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : undefined,
-                        updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : undefined,
                     };
+                    
+                    // Only add timestamp fields if they exist
+                    if (data.createdAt) {
+                        dataForValidation.createdAt = data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : data.createdAt;
+                    }
+                    if (data.updatedAt) {
+                        dataForValidation.updatedAt = data.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : data.updatedAt;
+                    }
+                    if (data.lastOrderAt) {
+                        dataForValidation.lastOrderAt = data.lastOrderAt?.toDate ? data.lastOrderAt.toDate().toISOString() : data.lastOrderAt;
+                    }
+                    if (data.lastInteractionAt) {
+                        dataForValidation.lastInteractionAt = data.lastInteractionAt?.toDate ? data.lastInteractionAt.toDate().toISOString() : data.lastInteractionAt;
+                    }
+                    if (data.inactiveSince) {
+                        dataForValidation.inactiveSince = data.inactiveSince?.toDate ? data.inactiveSince.toDate().toISOString() : data.inactiveSince;
+                    }
 
                     const validation = CustomerSchema.safeParse(dataForValidation);
                     if (validation.success) {

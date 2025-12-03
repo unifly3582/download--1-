@@ -11,14 +11,23 @@ async function getCustomerHandler(
   authContext: AuthContext
 ): Promise<NextResponse> {
   const { phone } = await params;
+  console.log(`[customers API] ========================================`);
   console.log(`[customers API] GET request for customer profile: ${phone}`);
+  console.log(`[customers API] Request URL: ${request.url}`);
+  console.log(`[customers API] ========================================`);
 
   try {
     const customer = await getCustomerByPhone(phone);
 
     if (!customer) {
+      console.log(`[customers API] ❌ Customer not found for phone: ${phone}`);
+      console.log(`[customers API] Returning 404 response`);
       return NextResponse.json({ success: false, error: "Customer not found" }, { status: 404 });
     }
+    
+    console.log(`[customers API] ✅ Successfully found customer: ${customer.customerId} for phone: ${phone}`);
+    console.log(`[customers API] Customer name: ${customer.name}`);
+    console.log(`[customers API] Has address: ${!!customer.defaultAddress}`);
 
     // Fetch the customer's orders
     const ordersSnapshot = await db.collection('orders').where('customerInfo.phone', '==', phone).orderBy('createdAt', 'desc').get();
