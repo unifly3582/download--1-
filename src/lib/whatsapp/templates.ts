@@ -199,6 +199,35 @@ export const ORDER_CANCELLED_TEMPLATE: WhatsAppTemplate = {
   ]
 };
 
+// Template 7: OTP Authentication
+// Template for customer login OTP
+export const OTP_TEMPLATE: WhatsAppTemplate = {
+  name: "otp",
+  language: "en",
+  components: [
+    {
+      type: "body",
+      parameters: [
+        {
+          type: "text",
+          text: "{{1}}" // OTP Code
+        }
+      ]
+    },
+    {
+      type: "button",
+      sub_type: "url",
+      index: 0,
+      parameters: [
+        {
+          type: "text",
+          text: "{{1}}" // OTP Code for URL
+        }
+      ]
+    }
+  ]
+};
+
 // Helper function to build template with actual data
 export function buildWhatsAppTemplate(
   template: WhatsAppTemplate,

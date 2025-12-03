@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PlusCircle, MoreHorizontal, AlertTriangle, Truck, RefreshCw, Search, Download, Filter, X, TrendingUp, Package, Clock, CheckCircle, Maximize2, Minimize2, Loader2 } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, AlertTriangle, Truck, RefreshCw, Search, Download, Filter, X, TrendingUp, Package, Clock, CheckCircle, Maximize2, Minimize2, Loader2, FileText } from 'lucide-react';
 import { CreateOrderDialog } from './create-order-dialog';
 import { ShipOrderDialog } from './ship-order-dialog';
 import { UpdateDimensionsDialog } from './update-dimensions-dialog';
@@ -676,6 +676,86 @@ export default function OrdersPage() {
     });
   }, [sortedOrders, selectedOrders, activeTab, toast]);
 
+  // Download Packing Manifest (CSV) - Optimized for packers
+  const handleDownloadManifest = useCallback(() => {
+    const ordersToExport = selectedOrders.size > 0
+      ? sortedOrders.filter(o => selectedOrders.has(o.id))
+      : sortedOrders;
+
+    if (ordersToExport.length === 0) {
+      toast({
+        title: 'No Orders for Manifest',
+        description: 'Please select orders or ensure filters return results.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Sort by pincode for efficient packing
+    const sortedByPincode = [...ordersToExport].sort((a, b) => 
+      a.shippingAddress.zip.localeCompare(b.shippingAddress.zip)
+    );
+
+    // CSV Headers - Simplified for packing workflow
+    const headers = [
+      'Order ID',
+      'Customer Name',
+      'Products (SKU x Quantity)',
+      'Weight (gm)'
+    ];
+
+    // CSV Rows
+    const rows = sortedByPincode.map(order => {
+      // Format products list: SKU x quantity
+      const products = order.items?.map((item: any) => {
+        return `${item.sku} x${item.quantity}`;
+      }).join(', ') || 'N/A';
+
+      // Get weight in grams - already stored in grams, no conversion needed
+      const orderWeightGrams = order.weight || 
+        (order.items?.reduce((sum: number, item: any) => 
+          sum + ((item.weight || 0) * item.quantity), 0)) || 
+        null;
+      
+      const weight = orderWeightGrams ? Math.round(orderWeightGrams) : '';
+
+      return [
+        order.orderId,
+        order.customerInfo.name,
+        `"${products.replace(/"/g, '""')}"`, // Escape quotes in products
+        weight
+      ];
+    });
+
+    // Create CSV content with BOM for Excel compatibility
+    const csvContent = '\uFEFF' + [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+
+    // Download CSV
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    // Generate filename with timestamp and count
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+    const filename = `packing_manifest_${ordersToExport.length}_orders_${timestamp}.csv`;
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: '📦 Manifest Downloaded',
+      description: `${ordersToExport.length} orders | Format: Order ID, Name, SKU x Qty, Weight (gm)`,
+    });
+  }, [sortedOrders, selectedOrders, toast]);
+
   const handleApprovalAction = async (orderId: string, action: 'approve' | 'reject') => {
     try {
       // Use optimized bulk API even for single operations
@@ -1205,6 +1285,20 @@ export default function OrdersPage() {
             <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
+          
+          {/* Show Manifest Download button prominently in To Ship tab */}
+          {activeTab === 'to-ship' && (
+            <Button 
+              variant="default" 
+              size="sm" 
+              onClick={handleDownloadManifest}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              Download Manifest {selectedOrders.size > 0 ? `(${selectedOrders.size})` : `(${sortedOrders.length})`}
+            </Button>
+          )}
+          
           <Button variant="outline" size="sm" onClick={handleExport}>
             <Download className="mr-2 h-4 w-4" />
             Export Orders {selectedOrders.size > 0 ? `(${selectedOrders.size})` : ''}
@@ -1257,6 +1351,15 @@ export default function OrdersPage() {
               {/* To Ship Tab Actions */}
               {activeTab === 'to-ship' && (
                 <>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={handleDownloadManifest}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    Download Manifest
+                  </Button>
                   <select
                     value={bulkShipCourier}
                     onChange={(e) => setBulkShipCourier(e.target.value as 'delhivery' | 'manual')}
