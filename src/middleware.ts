@@ -10,11 +10,21 @@ export function middleware(request: NextRequest) {
 
   // Get origin from request
   const origin = request.headers.get('origin');
+  const referer = request.headers.get('referer');
   
   // CORS Configuration
   const allowedOrigins = getAllowedOrigins();
   
-  if (origin && allowedOrigins.includes(origin)) {
+  // For API routes, always allow CORS for customer-facing endpoints
+  const isCustomerAPI = request.nextUrl.pathname.startsWith('/api/customer/');
+  
+  if (isCustomerAPI) {
+    // Allow all origins for customer-facing APIs
+    response.headers.set('Access-Control-Allow-Origin', '*');
+    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  } else if (origin && allowedOrigins.includes(origin)) {
+    // For other routes, check allowed origins
     response.headers.set('Access-Control-Allow-Origin', origin);
     response.headers.set('Access-Control-Allow-Credentials', 'true');
   }
@@ -23,7 +33,10 @@ export function middleware(request: NextRequest) {
   if (request.method === 'OPTIONS') {
     const preflightResponse = new NextResponse(null, { status: 204 });
     
-    if (origin && allowedOrigins.includes(origin)) {
+    if (isCustomerAPI) {
+      // Allow all origins for customer-facing APIs
+      preflightResponse.headers.set('Access-Control-Allow-Origin', '*');
+    } else if (origin && allowedOrigins.includes(origin)) {
       preflightResponse.headers.set('Access-Control-Allow-Origin', origin);
       preflightResponse.headers.set('Access-Control-Allow-Credentials', 'true');
     }
@@ -48,13 +61,15 @@ export function middleware(request: NextRequest) {
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   
   // Content Security Policy (adjust based on your needs)
+  // More permissive for customer-facing pages
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.googletagmanager.com",
+    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.googletagmanager.com https://checkout.razorpay.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: https: blob:",
     "font-src 'self' data: https://fonts.gstatic.com",
-    "connect-src 'self' https://firebasestorage.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.google.com https://fonts.googleapis.com",
+    "connect-src 'self' https://firebasestorage.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.google.com https://fonts.googleapis.com https://api.razorpay.com https://lumberjack.razorpay.com https://checkout.razorpay.com",
+    "frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com",
     "frame-ancestors 'none'",
   ].join('; ');
   
@@ -92,6 +107,17 @@ function getAllowedOrigins(): string[] {
     origins.push('http://127.0.0.1:3000');
     origins.push('http://127.0.0.1:9006');
   }
+
+  // WhatsApp/Facebook link wrappers (always allow)
+  origins.push('https://lm.facebook.com');
+  origins.push('https://l.facebook.com');
+  origins.push('https://m.facebook.com');
+  origins.push('https://www.facebook.com');
+  
+  // Other common referrers
+  origins.push('https://www.google.com');
+  origins.push('https://www.instagram.com');
+  origins.push('https://t.co'); // Twitter
 
   // Add custom origins from environment variable
   const customOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [];
