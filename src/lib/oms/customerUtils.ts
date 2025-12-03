@@ -165,12 +165,12 @@ export async function createOrUpdateCustomer(
             // Handle address for new customer
             let addressData = {};
             if (shippingAddress) {
-                // For new customers, set default address but leave savedAddresses empty
-                // User can explicitly add addresses to their address book later
+                // For new customers, set default address and add to savedAddresses
                 addressData = {
                     defaultAddress: shippingAddress,
-                    savedAddresses: [] // Start with empty address book
+                    savedAddresses: [shippingAddress] // Add first address to address book
                 };
+                console.log(`[OMS][CUSTOMER_UTILS] Added initial address to new customer's address book`);
             }
 
             const newCustomerObject = {
@@ -237,9 +237,20 @@ export async function createOrUpdateCustomer(
                     country: shippingAddress.country
                 };
                 
-                // Only update the default address for shipping purposes
-                // Do NOT automatically add to savedAddresses - that should be explicit user action
+                // Update default address
                 updateData.defaultAddress = normalizedAddress;
+                
+                // Also add to savedAddresses if it's not already there
+                const savedAddresses = existingCustomer.savedAddresses || [];
+                const addressExists = savedAddresses.some(addr => addressesEqual(addr, normalizedAddress));
+                
+                if (!addressExists) {
+                    updateData.savedAddresses = [...savedAddresses, normalizedAddress];
+                    console.log(`[OMS][CUSTOMER_UTILS] Added new address to savedAddresses for customer ${normalizedPhone}`);
+                } else {
+                    console.log(`[OMS][CUSTOMER_UTILS] Address already exists in savedAddresses for customer ${normalizedPhone}`);
+                }
+                
                 console.log(`[OMS][CUSTOMER_UTILS] Updated default address for customer ${normalizedPhone}`);
             }
            
