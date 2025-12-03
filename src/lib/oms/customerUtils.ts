@@ -34,13 +34,21 @@ export async function getCustomerByPhone(phone: string): Promise<Customer | null
         const normalizedPhone = phone.startsWith('+91') ? phone : `+91${phone}`;
         console.log(`[OMS][CUSTOMER_UTILS] Looking up customer with phone: ${normalizedPhone} (original: ${phone})`);
         
-        // Try method 1: Query by normalized phone field
-        let querySnapshot = await db.collection("customers").where('phone', '==', normalizedPhone).limit(1).get();
+        // Try method 1: Query by normalized phone field - ORDER BY createdAt DESC to get newest first
+        let querySnapshot = await db.collection("customers")
+            .where('phone', '==', normalizedPhone)
+            .orderBy('createdAt', 'desc')
+            .limit(1)
+            .get();
         
         // If not found with normalized phone, try with original phone (for backward compatibility)
         if (querySnapshot.empty && phone !== normalizedPhone) {
             console.log(`[OMS][CUSTOMER_UTILS] Not found with normalized phone, trying original: ${phone}`);
-            querySnapshot = await db.collection("customers").where('phone', '==', phone).limit(1).get();
+            querySnapshot = await db.collection("customers")
+                .where('phone', '==', phone)
+                .orderBy('createdAt', 'desc')
+                .limit(1)
+                .get();
         }
         
         if (!querySnapshot.empty) {
