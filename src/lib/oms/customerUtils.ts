@@ -103,28 +103,37 @@ export async function createOrUpdateCustomer(
     data: Partial<Omit<Customer, 'customerId' | 'createdAt' | 'updatedAt'>> & { customerId?: string },
     shippingAddress?: { street: string; city: string; state: string; zip: string; country: string; }
 ): Promise<Customer> {
+    // Normalize phone number FIRST before any lookups
+    const normalizedPhone = phone.startsWith('+91') ? phone : `+91${phone}`;
+    console.log(`[CUSTOMER_UTILS] createOrUpdateCustomer called with phone: ${phone} (normalized: ${normalizedPhone})`);
+    
     // First try to find existing customer by phone
-    const existingCustomer = await getCustomerByPhone(phone);
+    const existingCustomer = await getCustomerByPhone(normalizedPhone);
     let customerRef;
     let isNewCustomer = false;
     
     if (existingCustomer) {
+        console.log(`[CUSTOMER_UTILS] Found existing customer: ${existingCustomer.customerId}`);
         // For existing customers, we need to determine the correct document reference
         // Check if customer is stored by customerId (new pattern) or phone (legacy pattern)
         const customerIdDoc = await db.collection("customers").doc(existingCustomer.customerId).get();
-        const phoneDoc = await db.collection("customers").doc(phone).get();
+        const phoneDoc = await db.collection("customers").doc(normalizedPhone).get();
         
         if (customerIdDoc.exists) {
             // Customer is stored by customerId (new pattern)
             customerRef = db.collection("customers").doc(existingCustomer.customerId);
+            console.log(`[CUSTOMER_UTILS] Using existing customer document: ${existingCustomer.customerId}`);
         } else if (phoneDoc.exists) {
             // Customer is stored by phone (legacy pattern)
-            customerRef = db.collection("customers").doc(phone);
+            customerRef = db.collection("customers").doc(normalizedPhone);
+            console.log(`[CUSTOMER_UTILS] Using legacy customer document: ${normalizedPhone}`);
         } else {
             // This shouldn't happen, but fallback to customerId
             customerRef = db.collection("customers").doc(existingCustomer.customerId);
+            console.log(`[CUSTOMER_UTILS] Fallback to customerId: ${existingCustomer.customerId}`);
         }
     } else {
+        console.log(`[CUSTOMER_UTILS] No existing customer found, creating new one`);
         // Create new customer with generated customerId (new pattern)
         const newCustomerId = `CUS_${Date.now()}`;
         customerRef = db.collection("customers").doc(newCustomerId);
@@ -135,12 +144,9 @@ export async function createOrUpdateCustomer(
         const doc = await customerRef.get();
         
         if (!doc.exists) {
-            console.log(`[OMS][CUSTOMER_UTILS] Creating new customer: ${phone}`);
+            console.log(`[OMS][CUSTOMER_UTILS] Creating new customer: ${normalizedPhone}`);
             // Use the document ID as customerId for new customers
             const newCustomerId = customerRef.id;
-            
-            // Normalize phone number format to ensure consistency
-            const normalizedPhone = phone.startsWith('+91') ? phone : `+91${phone}`;
             
             const defaults = {
                 totalOrders: 0, totalSpent: 0, trustScore: 50, avgOrderValue: 0,
@@ -193,12 +199,9 @@ export async function createOrUpdateCustomer(
             return createdCustomerData as Customer;
 
         } else {
-            console.log(`[OMS][CUSTOMER_UTILS] Updating existing customer: ${phone}`);
+            console.log(`[OMS][CUSTOMER_UTILS] Updating existing customer: ${normalizedPhone}`);
             
             const existingCustomer = doc.data() as Customer;
-            
-            // Normalize phone number format to ensure consistency
-            const normalizedPhone = phone.startsWith('+91') ? phone : `+91${phone}`;
             
             // Build update data carefully - only include fields that are explicitly provided
             let updateData: any = { 
@@ -229,7 +232,7 @@ export async function createOrUpdateCustomer(
                 // Only update the default address for shipping purposes
                 // Do NOT automatically add to savedAddresses - that should be explicit user action
                 updateData.defaultAddress = normalizedAddress;
-                console.log(`[OMS][CUSTOMER_UTILS] Updated default address for customer ${phone}`);
+                console.log(`[OMS][CUSTOMER_UTILS] Updated default address for customer ${normalizedPhone}`);
             }
            
             // Filter out undefined values and fields that shouldn't be updated
@@ -271,7 +274,7 @@ export async function createOrUpdateCustomer(
         }
 
     } catch (error: any) {
-        console.error(`[OMS][CUSTOMER_UTILS] CRITICAL ERROR saving customer ${phone}:`, error);
+        console.error(`[OMS][CUSTOMER_UTILS] CRITICAL ERROR saving customer ${normalizedPhone}:`, error);
         throw error;
     }
 }
